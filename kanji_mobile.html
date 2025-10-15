@@ -1,0 +1,593 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>헵번식 로마자 연습</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+JP:wght@400;700&family=Noto+Serif+JP:wght@400;700&display=swap" rel="stylesheet">
+    <style>
+        /* Noto Serif for Mincho style */
+        .font-noto-serif {
+            font-family: 'Noto Serif JP', serif;
+        }
+        /* Noto Sans for Gothic style */
+        .font-noto-sans {
+            font-family: 'Noto Sans JP', sans-serif;
+        }
+        /* 기본 폰트를 좀 더 부드러운 것으로 설정 */
+        body {
+            font-family: 'Inter', 'Pretendard', sans-serif;
+        }
+        /* 스크롤바 디자인 */
+        ::-webkit-scrollbar {
+            width: 8px;
+        }
+        ::-webkit-scrollbar-track {
+            background: #f1f1f1;
+        }
+        ::-webkit-scrollbar-thumb {
+            background: #888;
+            border-radius: 4px;
+        }
+        ::-webkit-scrollbar-thumb:hover {
+            background: #555;
+        }
+    </style>
+</head>
+<body class="bg-slate-100 flex items-center justify-center min-h-screen">
+    <div class="w-full max-w-xl mx-auto p-4 md:p-8 bg-white rounded-2xl shadow-lg px-4">
+        <h1 class="text-3xl font-bold text-center text-slate-800 mb-2">헵번식 로마자 연습</h1>
+        <p class="text-center text-slate-500 mb-6">아래 문자의 로마자 표기를 입력하고 Enter를 누르세요.</p>
+
+        <div id="question-display" class="text-6xl md:text-8xl font-bold text-center my-8 text-slate-900 select-none">
+            <span id="char1" class="font-noto-serif"></span>
+            <span class="text-slate-300 mx-2">/</span>
+            <span id="char2" class="font-noto-sans"></span>
+        </div>
+
+        <div class="relative">
+            <input type="text" id="answer-input" class="w-full text-2xl p-4 border-2 border-slate-300 rounded-lg text-center focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all" placeholder="입력하세요" autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false">
+        </div>
+
+        <div id="feedback" class="mt-4 text-center text-xl min-h-[7rem] flex flex-col justify-center items-center p-2 rounded-lg cursor-pointer">
+            </div>
+
+        <div id="next-button-container" class="mt-4 flex justify-center hidden">
+             <button id="next-question-button" class="bg-blue-500 hover:bg-blue-600 text-white font-bold py-3 px-8 rounded-lg transition-transform transform hover:scale-105 w-full md:w-auto">
+                다음 문제
+            </button>
+        </div>
+
+
+        <div class="mt-6 flex justify-center">
+            <button id="stats-button" class="bg-slate-500 hover:bg-slate-600 text-white font-bold py-2 px-6 rounded-lg transition-transform transform hover:scale-105">
+                학습 통계 보기
+            </button>
+        </div>
+    </div>
+
+    <div id="stats-modal" class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 hidden">
+        <div class="bg-white rounded-2xl shadow-xl w-full max-w-3xl max-h-[80vh] flex flex-col">
+            <div class="p-5 border-b flex justify-between items-center">
+                <h2 class="text-2xl font-bold text-slate-800">학습 통계</h2>
+                <button id="close-modal-button" class="text-slate-500 hover:text-slate-800 text-2xl">&times;</button>
+            </div>
+            <div id="stats-content" class="p-6 overflow-y-auto">
+                </div>
+        </div>
+    </div>
+
+<script>
+// --- 데이터 영역 ---
+const quizData = [
+    // 히라가나 청음 (46)
+    { char: 'あ', romaji: ['a'], type: '히라가나', category: '청음', correct: 0, incorrect: 0, pair: 'ア' },
+    { char: 'い', romaji: ['i'], type: '히라가나', category: '청음', correct: 0, incorrect: 0, pair: 'イ' },
+    { char: 'う', romaji: ['u'], type: '히라가나', category: '청음', correct: 0, incorrect: 0, pair: 'ウ' },
+    { char: 'え', romaji: ['e'], type: '히라가나', category: '청음', correct: 0, incorrect: 0, pair: 'エ' },
+    { char: 'お', romaji: ['o'], type: '히라가나', category: '청음', correct: 0, incorrect: 0, pair: 'オ' },
+    { char: 'か', romaji: ['ka'], type: '히라가나', category: '청음', correct: 0, incorrect: 0, pair: 'カ' },
+    { char: 'き', romaji: ['ki'], type: '히라가나', category: '청음', correct: 0, incorrect: 0, pair: 'キ' },
+    { char: 'く', romaji: ['ku'], type: '히라가나', category: '청음', correct: 0, incorrect: 0, pair: 'ク' },
+    { char: 'け', romaji: ['ke'], type: '히라가나', category: '청음', correct: 0, incorrect: 0, pair: 'ケ' },
+    { char: 'こ', romaji: ['ko'], type: '히라가나', category: '청음', correct: 0, incorrect: 0, pair: 'コ' },
+    { char: 'さ', romaji: ['sa'], type: '히라가나', category: '청음', correct: 0, incorrect: 0, pair: 'サ' },
+    { char: 'し', romaji: ['shi'], type: '히라가나', category: '청음', correct: 0, incorrect: 0, pair: 'シ' },
+    { char: 'す', romaji: ['su'], type: '히라가나', category: '청음', correct: 0, incorrect: 0, pair: 'ス' },
+    { char: 'せ', romaji: ['se'], type: '히라가나', category: '청음', correct: 0, incorrect: 0, pair: 'セ' },
+    { char: 'そ', romaji: ['so'], type: '히라가나', category: '청음', correct: 0, incorrect: 0, pair: 'ソ' },
+    { char: 'た', romaji: ['ta'], type: '히라가나', category: '청음', correct: 0, incorrect: 0, pair: 'タ' },
+    { char: 'ち', romaji: ['chi'], type: '히라가나', category: '청음', correct: 0, incorrect: 0, pair: 'チ' },
+    { char: 'つ', romaji: ['tsu'], type: '히라가나', category: '청음', correct: 0, incorrect: 0, pair: 'ツ' },
+    { char: 'て', romaji: ['te'], type: '히라가나', category: '청음', correct: 0, incorrect: 0, pair: 'テ' },
+    { char: 'と', romaji: ['to'], type: '히라가나', category: '청음', correct: 0, incorrect: 0, pair: 'ト' },
+    { char: 'な', romaji: ['na'], type: '히라가나', category: '청음', correct: 0, incorrect: 0, pair: 'ナ' },
+    { char: 'に', romaji: ['ni'], type: '히라가나', category: '청음', correct: 0, incorrect: 0, pair: 'ニ' },
+    { char: 'ぬ', romaji: ['nu'], type: '히라가나', category: '청음', correct: 0, incorrect: 0, pair: 'ヌ' },
+    { char: 'ね', romaji: ['ne'], type: '히라가나', category: '청음', correct: 0, incorrect: 0, pair: 'ネ' },
+    { char: 'の', romaji: ['no'], type: '히라가나', category: '청음', correct: 0, incorrect: 0, pair: 'ノ' },
+    { char: 'は', romaji: ['ha'], type: '히라가나', category: '청음', correct: 0, incorrect: 0, pair: 'ハ' },
+    { char: 'ひ', romaji: ['hi'], type: '히라가나', category: '청음', correct: 0, incorrect: 0, pair: 'ヒ' },
+    { char: 'ふ', romaji: ['fu'], type: '히라가나', category: '청음', correct: 0, incorrect: 0, pair: 'フ' },
+    { char: 'へ', romaji: ['he'], type: '히라가나', category: '청음', correct: 0, incorrect: 0, pair: 'ヘ' },
+    { char: 'ほ', romaji: ['ho'], type: '히라가나', category: '청음', correct: 0, incorrect: 0, pair: 'ホ' },
+    { char: 'ま', romaji: ['ma'], type: '히라가나', category: '청음', correct: 0, incorrect: 0, pair: 'マ' },
+    { char: 'み', romaji: ['mi'], type: '히라가나', category: '청음', correct: 0, incorrect: 0, pair: 'ミ' },
+    { char: 'む', romaji: ['mu'], type: '히라가나', category: '청음', correct: 0, incorrect: 0, pair: 'ム' },
+    { char: 'め', romaji: ['me'], type: '히라가나', category: '청음', correct: 0, incorrect: 0, pair: 'メ' },
+    { char: 'も', romaji: ['mo'], type: '히라가나', category: '청음', correct: 0, incorrect: 0, pair: 'モ' },
+    { char: 'や', romaji: ['ya'], type: '히라가나', category: '청음', correct: 0, incorrect: 0, pair: 'ヤ' },
+    { char: 'ゆ', romaji: ['yu'], type: '히라가나', category: '청음', correct: 0, incorrect: 0, pair: 'ユ' },
+    { char: 'よ', romaji: ['yo'], type: '히라가나', category: '청음', correct: 0, incorrect: 0, pair: 'ヨ' },
+    { char: 'ら', romaji: ['ra'], type: '히라가나', category: '청음', correct: 0, incorrect: 0, pair: 'ラ' },
+    { char: 'り', romaji: ['ri'], type: '히라가나', category: '청음', correct: 0, incorrect: 0, pair: 'リ' },
+    { char: 'る', romaji: ['ru'], type: '히라가나', category: '청음', correct: 0, incorrect: 0, pair: 'ル' },
+    { char: 'れ', romaji: ['re'], type: '히라가나', category: '청음', correct: 0, incorrect: 0, pair: 'レ' },
+    { char: 'ろ', romaji: ['ro'], type: '히라가나', category: '청음', correct: 0, incorrect: 0, pair: 'ロ' },
+    { char: 'わ', romaji: ['wa'], type: '히라가나', category: '청음', correct: 0, incorrect: 0, pair: 'ワ' },
+    { char: 'を', romaji: ['wo', 'o'], type: '히라가나', category: '청음', correct: 0, incorrect: 0, pair: 'ヲ' },
+    
+    // 히라가나 발음 (1)
+    { char: 'ん', romaji: ['nn', 'n'], type: '히라가나', category: '발음', correct: 0, incorrect: 0, pair: 'ン' },
+    
+    // 히라가나 탁음 (20)
+    { char: 'が', romaji: ['ga'], type: '히라가나', category: '탁음', correct: 0, incorrect: 0, pair: 'ガ' },
+    { char: 'ぎ', romaji: ['gi'], type: '히라가나', category: '탁음', correct: 0, incorrect: 0, pair: 'ギ' },
+    { char: 'ぐ', romaji: ['gu'], type: '히라가나', category: '탁음', correct: 0, incorrect: 0, pair: 'グ' },
+    { char: 'げ', romaji: ['ge'], type: '히라가나', category: '탁음', correct: 0, incorrect: 0, pair: 'ゲ' },
+    { char: 'ご', romaji: ['go'], type: '히라가나', category: '탁음', correct: 0, incorrect: 0, pair: 'ゴ' },
+    { char: 'ざ', romaji: ['za'], type: '히라가나', category: '탁음', correct: 0, incorrect: 0, pair: 'ザ' },
+    { char: 'じ', romaji: ['ji'], type: '히라가나', category: '탁음', correct: 0, incorrect: 0, pair: 'ジ' },
+    { char: 'ず', romaji: ['zu'], type: '히라가나', category: '탁음', correct: 0, incorrect: 0, pair: 'ズ' },
+    { char: 'ぜ', romaji: ['ze'], type: '히라가나', category: '탁음', correct: 0, incorrect: 0, pair: 'ゼ' },
+    { char: 'ぞ', romaji: ['zo'], type: '히라가나', category: '탁음', correct: 0, incorrect: 0, pair: 'ゾ' },
+    { char: 'だ', romaji: ['da'], type: '히라가나', category: '탁음', correct: 0, incorrect: 0, pair: 'ダ' },
+    { char: 'ぢ', romaji: ['ji'], type: '히라가나', category: '탁음', correct: 0, incorrect: 0, pair: 'ヂ' },
+    { char: 'づ', romaji: ['zu'], type: '히라가나', category: '탁음', correct: 0, incorrect: 0, pair: 'ヅ' },
+    { char: 'で', romaji: ['de'], type: '히라가나', category: '탁음', correct: 0, incorrect: 0, pair: 'デ' },
+    { char: 'ど', romaji: ['do'], type: '히라가나', category: '탁음', correct: 0, incorrect: 0, pair: 'ド' },
+    { char: 'ば', romaji: ['ba'], type: '히라가나', category: '탁음', correct: 0, incorrect: 0, pair: 'バ' },
+    { char: 'び', romaji: ['bi'], type: '히라가나', category: '탁음', correct: 0, incorrect: 0, pair: 'ビ' },
+    { char: 'ぶ', romaji: ['bu'], type: '히라가나', category: '탁음', correct: 0, incorrect: 0, pair: 'ブ' },
+    { char: 'べ', romaji: ['be'], type: '히라가나', category: '탁음', correct: 0, incorrect: 0, pair: 'ベ' },
+    { char: 'ぼ', romaji: ['bo'], type: '히라가나', category: '탁음', correct: 0, incorrect: 0, pair: 'ボ' },
+
+    // 히라가나 반탁음 (5)
+    { char: 'ぱ', romaji: ['pa'], type: '히라가나', category: '반탁음', correct: 0, incorrect: 0, pair: 'パ' },
+    { char: 'ぴ', romaji: ['pi'], type: '히라가나', category: '반탁음', correct: 0, incorrect: 0, pair: 'ピ' },
+    { char: 'ぷ', romaji: ['pu'], type: '히라가나', category: '반탁음', correct: 0, incorrect: 0, pair: 'プ' },
+    { char: 'ぺ', romaji: ['pe'], type: '히라가나', category: '반탁음', correct: 0, incorrect: 0, pair: 'ペ' },
+    { char: 'ぽ', romaji: ['po'], type: '히라가나', category: '반탁음', correct: 0, incorrect: 0, pair: 'ポ' },
+
+    // 히라가나 요음 (33)
+    { char: 'きゃ', romaji: ['kya'], type: '히라가나', category: '요음', correct: 0, incorrect: 0, pair: 'キャ' },
+    { char: 'きゅ', romaji: ['kyu'], type: '히라가나', category: '요음', correct: 0, incorrect: 0, pair: 'キュ' },
+    { char: 'きょ', romaji: ['kyo'], type: '히라가나', category: '요음', correct: 0, incorrect: 0, pair: 'キョ' },
+    { char: 'しゃ', romaji: ['sha'], type: '히라가나', category: '요음', correct: 0, incorrect: 0, pair: 'シャ' },
+    { char: 'しゅ', romaji: ['shu'], type: '히라가나', category: '요음', correct: 0, incorrect: 0, pair: 'シュ' },
+    { char: 'しょ', romaji: ['sho'], type: '히라가나', category: '요음', correct: 0, incorrect: 0, pair: 'ショ' },
+    { char: 'ちゃ', romaji: ['cha'], type: '히라가나', category: '요음', correct: 0, incorrect: 0, pair: 'チャ' },
+    { char: 'ちゅ', romaji: ['chu'], type: '히라가나', category: '요음', correct: 0, incorrect: 0, pair: 'チュ' },
+    { char: 'ちょ', romaji: ['cho'], type: '히라가나', category: '요음', correct: 0, incorrect: 0, pair: 'チョ' },
+    { char: 'にゃ', romaji: ['nya'], type: '히라가나', category: '요음', correct: 0, incorrect: 0, pair: 'ニャ' },
+    { char: 'にゅ', romaji: ['nyu'], type: '히라가나', category: '요음', correct: 0, incorrect: 0, pair: 'ニュ' },
+    { char: 'にょ', romaji: ['nyo'], type: '히라가나', category: '요음', correct: 0, incorrect: 0, pair: 'ニョ' },
+    { char: 'ひゃ', romaji: ['hya'], type: '히라가나', category: '요음', correct: 0, incorrect: 0, pair: 'ヒャ' },
+    { char: 'ひゅ', romaji: ['hyu'], type: '히라가나', category: '요음', correct: 0, incorrect: 0, pair: 'ヒュ' },
+    { char: 'ひょ', romaji: ['hyo'], type: '히라가나', category: '요음', correct: 0, incorrect: 0, pair: 'ヒョ' },
+    { char: 'みゃ', romaji: ['mya'], type: '히라가나', category: '요음', correct: 0, incorrect: 0, pair: 'ミャ' },
+    { char: 'みゅ', romaji: ['myu'], type: '히라가나', category: '요음', correct: 0, incorrect: 0, pair: 'ミュ' },
+    { char: 'みょ', romaji: ['myo'], type: '히라가나', category: '요음', correct: 0, incorrect: 0, pair: 'ミョ' },
+    { char: 'りゃ', romaji: ['rya'], type: '히라가나', category: '요음', correct: 0, incorrect: 0, pair: 'リャ' },
+    { char: 'りゅ', romaji: ['ryu'], type: '히라가나', category: '요음', correct: 0, incorrect: 0, pair: 'リュ' },
+    { char: 'りょ', romaji: ['ryo'], type: '히라가나', category: '요음', correct: 0, incorrect: 0, pair: 'リョ' },
+    { char: 'ぎゃ', romaji: ['gya'], type: '히라가나', category: '요음', correct: 0, incorrect: 0, pair: 'ギャ' },
+    { char: 'ぎゅ', romaji: ['gyu'], type: '히라가나', category: '요음', correct: 0, incorrect: 0, pair: 'ギュ' },
+    { char: 'ぎょ', romaji: ['gyo'], type: '히라가나', category: '요음', correct: 0, incorrect: 0, pair: 'ギョ' },
+    { char: 'じゃ', romaji: ['ja'], type: '히라가나', category: '요음', correct: 0, incorrect: 0, pair: 'ジャ' },
+    { char: 'じゅ', romaji: ['ju'], type: '히라가나', category: '요음', correct: 0, incorrect: 0, pair: 'ジュ' },
+    { char: 'じょ', romaji: ['jo'], type: '히라가나', category: '요음', correct: 0, incorrect: 0, pair: 'ジョ' },
+    { char: 'びゃ', romaji: ['bya'], type: '히라가나', category: '요음', correct: 0, incorrect: 0, pair: 'ビャ' },
+    { char: 'びゅ', romaji: ['byu'], type: '히라가나', category: '요음', correct: 0, incorrect: 0, pair: 'ビュ' },
+    { char: 'びょ', romaji: ['byo'], type: '히라가나', category: '요음', correct: 0, incorrect: 0, pair: 'ビョ' },
+    { char: 'ぴゃ', romaji: ['pya'], type: '히라가나', category: '요음', correct: 0, incorrect: 0, pair: 'ピャ' },
+    { char: 'ぴゅ', romaji: ['pyu'], type: '히라가나', category: '요음', correct: 0, incorrect: 0, pair: 'ピュ' },
+    { char: 'ぴょ', romaji: ['pyo'], type: '히라가나', category: '요음', correct: 0, incorrect: 0, pair: 'ピョ' },
+
+    // 가타카나 청음 (46)
+    { char: 'ア', romaji: ['a'], type: '가타카나', category: '청음', correct: 0, incorrect: 0, pair: 'あ' },
+    { char: 'イ', romaji: ['i'], type: '가타카나', category: '청음', correct: 0, incorrect: 0, pair: 'い' },
+    { char: 'ウ', romaji: ['u'], type: '가타카나', category: '청음', correct: 0, incorrect: 0, pair: 'う' },
+    { char: 'エ', romaji: ['e'], type: '가타카나', category: '청음', correct: 0, incorrect: 0, pair: 'え' },
+    { char: 'オ', romaji: ['o'], type: '가타카나', category: '청음', correct: 0, incorrect: 0, pair: 'お' },
+    { char: 'カ', romaji: ['ka'], type: '가타카나', category: '청음', correct: 0, incorrect: 0, pair: 'か' },
+    { char: 'キ', romaji: ['ki'], type: '가타카나', category: '청음', correct: 0, incorrect: 0, pair: 'き' },
+    { char: 'ク', romaji: ['ku'], type: '가타카나', category: '청음', correct: 0, incorrect: 0, pair: 'く' },
+    { char: 'ケ', romaji: ['ke'], type: '가타카나', category: '청음', correct: 0, incorrect: 0, pair: 'け' },
+    { char: 'コ', romaji: ['ko'], type: '가타카나', category: '청음', correct: 0, incorrect: 0, pair: 'こ' },
+    { char: 'サ', romaji: ['sa'], type: '가타카나', category: '청음', correct: 0, incorrect: 0, pair: 'さ' },
+    { char: 'シ', romaji: ['shi'], type: '가타카나', category: '청음', correct: 0, incorrect: 0, pair: 'し' },
+    { char: 'ス', romaji: ['su'], type: '가타카나', category: '청음', correct: 0, incorrect: 0, pair: 'す' },
+    { char: 'セ', romaji: ['se'], type: '가타카나', category: '청음', correct: 0, incorrect: 0, pair: 'せ' },
+    { char: 'ソ', romaji: ['so'], type: '가타카나', category: '청음', correct: 0, incorrect: 0, pair: 'そ' },
+    { char: 'タ', romaji: ['ta'], type: '가타카나', category: '청음', correct: 0, incorrect: 0, pair: 'た' },
+    { char: 'チ', romaji: ['chi'], type: '가타카나', category: '청음', correct: 0, incorrect: 0, pair: 'ち' },
+    { char: 'ツ', romaji: ['tsu'], type: '가타카나', category: '청음', correct: 0, incorrect: 0, pair: 'つ' },
+    { char: 'テ', romaji: ['te'], type: '가타카나', category: '청음', correct: 0, incorrect: 0, pair: 'て' },
+    { char: 'ト', romaji: ['to'], type: '가타카나', category: '청음', correct: 0, incorrect: 0, pair: 'と' },
+    { char: 'ナ', romaji: ['na'], type: '가타카나', category: '청음', correct: 0, incorrect: 0, pair: 'な' },
+    { char: 'ニ', romaji: ['ni'], type: '가타카나', category: '청음', correct: 0, incorrect: 0, pair: 'に' },
+    { char: 'ヌ', romaji: ['nu'], type: '가타카나', category: '청음', correct: 0, incorrect: 0, pair: 'ぬ' },
+    { char: 'ネ', romaji: ['ne'], type: '가타카나', category: '청음', correct: 0, incorrect: 0, pair: 'ね' },
+    { char: 'ノ', romaji: ['no'], type: '가타카나', category: '청음', correct: 0, incorrect: 0, pair: 'の' },
+    { char: 'ハ', romaji: ['ha'], type: '가타카나', category: '청음', correct: 0, incorrect: 0, pair: 'は' },
+    { char: 'ヒ', romaji: ['hi'], type: '가타카나', category: '청음', correct: 0, incorrect: 0, pair: 'ひ' },
+    { char: 'フ', romaji: ['fu'], type: '가타카나', category: '청음', correct: 0, incorrect: 0, pair: 'ふ' },
+    { char: 'ヘ', romaji: ['he'], type: '가타카나', category: '청음', correct: 0, incorrect: 0, pair: 'へ' },
+    { char: 'ホ', romaji: ['ho'], type: '가타카나', category: '청음', correct: 0, incorrect: 0, pair: 'ほ' },
+    { char: 'マ', romaji: ['ma'], type: '가타카나', category: '청음', correct: 0, incorrect: 0, pair: 'ま' },
+    { char: 'ミ', romaji: ['mi'], type: '가타카나', category: '청음', correct: 0, incorrect: 0, pair: 'み' },
+    { char: 'ム', romaji: ['mu'], type: '가타카나', category: '청음', correct: 0, incorrect: 0, pair: 'む' },
+    { char: 'メ', romaji: ['me'], type: '가타카나', category: '청음', correct: 0, incorrect: 0, pair: 'め' },
+    { char: 'モ', romaji: ['mo'], type: '가타카나', category: '청음', correct: 0, incorrect: 0, pair: 'も' },
+    { char: 'ヤ', romaji: ['ya'], type: '가타카나', category: '청음', correct: 0, incorrect: 0, pair: 'や' },
+    { char: 'ユ', romaji: ['yu'], type: '가타카나', category: '청음', correct: 0, incorrect: 0, pair: 'ゆ' },
+    { char: 'ヨ', romaji: ['yo'], type: '가타카나', category: '청음', correct: 0, incorrect: 0, pair: 'よ' },
+    { char: 'ラ', romaji: ['ra'], type: '가타카나', category: '청음', correct: 0, incorrect: 0, pair: 'ら' },
+    { char: 'リ', romaji: ['ri'], type: '가타카나', category: '청음', correct: 0, incorrect: 0, pair: 'り' },
+    { char: 'ル', romaji: ['ru'], type: '가타카나', category: '청음', correct: 0, incorrect: 0, pair: 'る' },
+    { char: 'レ', romaji: ['re'], type: '가타카나', category: '청음', correct: 0, incorrect: 0, pair: 'れ' },
+    { char: 'ロ', romaji: ['ro'], type: '가타카나', category: '청음', correct: 0, incorrect: 0, pair: 'ろ' },
+    { char: 'ワ', romaji: ['wa'], type: '가타카나', category: '청음', correct: 0, incorrect: 0, pair: 'わ' },
+    { char: 'ヲ', romaji: ['wo', 'o'], type: '가타카나', category: '청음', correct: 0, incorrect: 0, pair: 'を' },
+
+    // 가타카나 발음 (1)
+    { char: 'ン', romaji: ['nn', 'n'], type: '가타카나', category: '발음', correct: 0, incorrect: 0, pair: 'ん' },
+
+    // 가타카나 탁음 (20)
+    { char: 'ガ', romaji: ['ga'], type: '가타카나', category: '탁음', correct: 0, incorrect: 0, pair: 'が' },
+    { char: 'ギ', romaji: ['gi'], type: '가타카나', category: '탁음', correct: 0, incorrect: 0, pair: 'ぎ' },
+    { char: 'グ', romaji: ['gu'], type: '가타카나', category: '탁음', correct: 0, incorrect: 0, pair: 'ぐ' },
+    { char: 'ゲ', romaji: ['ge'], type: '가타카나', category: '탁음', correct: 0, incorrect: 0, pair: 'げ' },
+    { char: 'ゴ', romaji: ['go'], type: '가타카나', category: '탁음', correct: 0, incorrect: 0, pair: 'ご' },
+    { char: 'ザ', romaji: ['za'], type: '가타카나', category: '탁음', correct: 0, incorrect: 0, pair: 'ざ' },
+    { char: 'ジ', romaji: ['ji'], type: '가타카나', category: '탁음', correct: 0, incorrect: 0, pair: 'じ' },
+    { char: 'ズ', romaji: ['zu'], type: '가타카나', category: '탁음', correct: 0, incorrect: 0, pair: 'ず' },
+    { char: 'ゼ', romaji: ['ze'], type: '가타카나', category: '탁음', correct: 0, incorrect: 0, pair: 'ぜ' },
+    { char: 'ゾ', romaji: ['zo'], type: '가타카나', category: '탁음', correct: 0, incorrect: 0, pair: 'ぞ' },
+    { char: 'ダ', romaji: ['da'], type: '가타카나', category: '탁음', correct: 0, incorrect: 0, pair: 'だ' },
+    { char: 'ヂ', romaji: ['ji'], type: '가타카나', category: '탁음', correct: 0, incorrect: 0, pair: 'ぢ' },
+    { char: 'ヅ', romaji: ['zu'], type: '가타카나', category: '탁음', correct: 0, incorrect: 0, pair: 'づ' },
+    { char: 'デ', romaji: ['de'], type: '가타카나', category: '탁음', correct: 0, incorrect: 0, pair: 'で' },
+    { char: 'ド', romaji: ['do'], type: '가타카나', category: '탁음', correct: 0, incorrect: 0, pair: 'ど' },
+    { char: 'バ', romaji: ['ba'], type: '가타카나', category: '탁음', correct: 0, incorrect: 0, pair: 'ば' },
+    { char: 'ビ', romaji: ['bi'], type: '가타카나', category: '탁음', correct: 0, incorrect: 0, pair: 'び' },
+    { char: 'ブ', romaji: ['bu'], type: '가타카나', category: '탁음', correct: 0, incorrect: 0, pair: 'ぶ' },
+    { char: 'ベ', romaji: ['be'], type: '가타카나', category: '탁음', correct: 0, incorrect: 0, pair: 'べ' },
+    { char: 'ボ', romaji: ['bo'], type: '가타카나', category: '탁음', correct: 0, incorrect: 0, pair: 'ぼ' },
+
+    // 가타카나 반탁음 (5)
+    { char: 'パ', romaji: ['pa'], type: '가타카나', category: '반탁음', correct: 0, incorrect: 0, pair: 'ぱ' },
+    { char: 'ピ', romaji: ['pi'], type: '가타카나', category: '반탁음', correct: 0, incorrect: 0, pair: 'ぴ' },
+    { char: 'プ', romaji: ['pu'], type: '가타카나', category: '반탁음', correct: 0, incorrect: 0, pair: 'ぷ' },
+    { char: 'ペ', romaji: ['pe'], type: '가타카나', category: '반탁음', correct: 0, incorrect: 0, pair: 'ぺ' },
+    { char: 'ポ', romaji: ['po'], type: '가타카나', category: '반탁음', correct: 0, incorrect: 0, pair: 'ぽ' },
+
+    // 가타카나 요음 (33)
+    { char: 'キャ', romaji: ['kya'], type: '가타카나', category: '요음', correct: 0, incorrect: 0, pair: 'きゃ' },
+    { char: 'キュ', romaji: ['kyu'], type: '가타카나', category: '요음', correct: 0, incorrect: 0, pair: 'きゅ' },
+    { char: 'キョ', romaji: ['kyo'], type: '가타카나', category: '요음', correct: 0, incorrect: 0, pair: 'きょ' },
+    { char: 'シャ', romaji: ['sha'], type: '가타카나', category: '요음', correct: 0, incorrect: 0, pair: 'しゃ' },
+    { char: 'シュ', romaji: ['shu'], type: '가타카나', category: '요음', correct: 0, incorrect: 0, pair: 'しゅ' },
+    { char: 'ショ', romaji: ['sho'], type: '가타카나', category: '요음', correct: 0, incorrect: 0, pair: 'しょ' },
+    { char: 'チャ', romaji: ['cha'], type: '가타카나', category: '요음', correct: 0, incorrect: 0, pair: 'ちゃ' },
+    { char: 'チュ', romaji: ['chu'], type: '가타카나', category: '요음', correct: 0, incorrect: 0, pair: 'ちゅ' },
+    { char: 'チョ', romaji: ['cho'], type: '가타카나', category: '요음', correct: 0, incorrect: 0, pair: 'ちょ' },
+    { char: 'ニャ', romaji: ['nya'], type: '가타카나', category: '요음', correct: 0, incorrect: 0, pair: 'にゃ' },
+    { char: 'ニュ', romaji: ['nyu'], type: '가타카나', category: '요음', correct: 0, incorrect: 0, pair: 'にゅ' },
+    { char: 'ニョ', romaji: ['nyo'], type: '가타카나', category: '요음', correct: 0, incorrect: 0, pair: 'にょ' },
+    { char: 'ヒャ', romaji: ['hya'], type: '가타카나', category: '요음', correct: 0, incorrect: 0, pair: 'ひゃ' },
+    { char: 'ヒュ', romaji: ['hyu'], type: '가타카나', category: '요음', correct: 0, incorrect: 0, pair: 'ひゅ' },
+    { char: 'ヒョ', romaji: ['hyo'], type: '가타카나', category: '요음', correct: 0, incorrect: 0, pair: 'ひょ' },
+    { char: 'ミャ', romaji: ['mya'], type: '가타카나', category: '요음', correct: 0, incorrect: 0, pair: 'みゃ' },
+    { char: 'ミュ', romaji: ['myu'], type: '가타카나', category: '요음', correct: 0, incorrect: 0, pair: 'みゅ' },
+    { char: 'ミョ', romaji: ['myo'], type: '가타카나', category: '요음', correct: 0, incorrect: 0, pair: 'みょ' },
+    { char: 'リャ', romaji: ['rya'], type: '가타카나', category: '요음', correct: 0, incorrect: 0, pair: 'りゃ' },
+    { char: 'リュ', romaji: ['ryu'], type: '가타카나', category: '요음', correct: 0, incorrect: 0, pair: 'りゅ' },
+    { char: 'リョ', romaji: ['ryo'], type: '가타카나', category: '요음', correct: 0, incorrect: 0, pair: 'りょ' },
+    { char: 'ギャ', romaji: ['gya'], type: '가타카나', category: '요음', correct: 0, incorrect: 0, pair: 'ぎゃ' },
+    { char: 'ギュ', romaji: ['gyu'], type: '가타카나', category: '요음', correct: 0, incorrect: 0, pair: 'ぎゅ' },
+    { char: 'ギョ', romaji: ['gyo'], type: '가타카나', category: '요음', correct: 0, incorrect: 0, pair: 'ぎょ' },
+    { char: 'ジャ', romaji: ['ja'], type: '가타카나', category: '요음', correct: 0, incorrect: 0, pair: 'じゃ' },
+    { char: 'ジュ', romaji: ['ju'], type: '가타카나', category: '요음', correct: 0, incorrect: 0, pair: 'じゅ' },
+    { char: 'ジョ', romaji: ['jo'], type: '가타카나', category: '요음', correct: 0, incorrect: 0, pair: 'じょ' },
+    { char: 'ビャ', romaji: ['bya'], type: '가타카나', category: '요음', correct: 0, incorrect: 0, pair: 'びゃ' },
+    { char: 'ビュ', romaji: ['byu'], type: '가타카나', category: '요음', correct: 0, incorrect: 0, pair: 'びゅ' },
+    { char: 'ビョ', romaji: ['byo'], type: '가타카나', category: '요음', correct: 0, incorrect: 0, pair: 'びょ' },
+    { char: 'ピャ', romaji: ['pya'], type: '가타카나', category: '요음', correct: 0, incorrect: 0, pair: 'ぴゃ' },
+    { char: 'ピュ', romaji: ['pyu'], type: '가타카나', category: '요음', correct: 0, incorrect: 0, pair: 'ぴゅ' },
+    { char: 'ピョ', romaji: ['pyo'], type: '가타카나', category: '요음', correct: 0, incorrect: 0, pair: 'ぴょ' },
+];
+
+// --- 애플리케이션 상태 변수 ---
+let shuffledData = [];
+let currentIndex = 0;
+let showingAnswer = false; // 정답 확인 후 다음 문제로 넘어가는 상태 관리
+
+// --- DOM 요소 ---
+const char1Element = document.getElementById('char1');
+const char2Element = document.getElementById('char2');
+const answerInput = document.getElementById('answer-input');
+const feedbackElement = document.getElementById('feedback');
+const statsButton = document.getElementById('stats-button');
+const statsModal = document.getElementById('stats-modal');
+const closeModalButton = document.getElementById('close-modal-button');
+const statsContent = document.getElementById('stats-content');
+// [추가] 다음 문제 버튼 DOM 요소
+const nextButtonContainer = document.getElementById('next-button-container');
+const nextQuestionButton = document.getElementById('next-question-button');
+
+
+// --- 함수 ---
+
+/**
+ * 배열을 무작위로 섞는 함수 (Fisher-Yates 알고리즘)
+ */
+function shuffleArray(array) {
+    for (let i = array.length - 1; i > 0; i--) {
+        const j = Math.floor(Math.random() * (i + 1));
+        [array[i], array[j]] = [array[j], array[i]];
+    }
+}
+
+/**
+ * 지정된 비율에 따라 가중치가 적용된 문제 목록을 생성하는 함수
+ */
+function createWeightedShuffledData() {
+    const seionHatsuon = quizData.filter(item => item.category === '청음' || item.category === '발음');
+    const dakuon = quizData.filter(item => item.category === '탁음');
+    const handakuon = quizData.filter(item => item.category === '반탁음');
+    const youon = quizData.filter(item => item.category === '요음');
+
+    let weightedList = [];
+
+    // 각 카테고리 배열에서 무작위로 n개의 항목을 선택하는 도우미 함수
+    const getRandomItems = (arr, count) => {
+        let result = [];
+        if (arr.length === 0) return result;
+        for (let i = 0; i < count; i++) {
+            const randomIndex = Math.floor(Math.random() * arr.length);
+            result.push(arr[randomIndex]);
+        }
+        return result;
+    };
+
+    // 설정된 비율에 따라 문제 추가 (총 20문제 기준)
+    weightedList.push(...getRandomItems(seionHatsuon, 12)); // 60%
+    weightedList.push(...getRandomItems(dakuon, 4));      // 20%
+    weightedList.push(...getRandomItems(handakuon, 1));      // 5%
+    weightedList.push(...getRandomItems(youon, 3));      // 15%
+
+    // 생성된 라운드를 무작위로 섞음
+    shuffleArray(weightedList);
+    return weightedList;
+}
+
+/**
+ * 다음 문제를 화면에 표시하는 함수
+ */
+function displayQuestion() {
+    showingAnswer = false;
+    // 한 라운드의 문제가 모두 출제되면 새로운 라운드를 생성
+    if (currentIndex >= shuffledData.length) {
+        shuffledData = createWeightedShuffledData();
+        currentIndex = 0; 
+    }
+    
+    const currentQuestion = shuffledData[currentIndex];
+    char1Element.textContent = currentQuestion.char;
+    char2Element.textContent = currentQuestion.char;
+    
+    answerInput.value = '';
+    answerInput.disabled = false;
+    answerInput.focus();
+    feedbackElement.innerHTML = '';
+    // [추가] 다음 문제 버튼 숨기기
+    nextButtonContainer.classList.add('hidden');
+    // [추가] 피드백 영역 배경색 초기화
+    feedbackElement.classList.remove('bg-green-50', 'bg-red-50');
+
+}
+
+/**
+ * 사용자의 답변을 확인하는 함수
+ */
+function checkAnswer() {
+    const userAnswer = answerInput.value.trim().toLowerCase();
+    if (!userAnswer) return;
+
+    const currentQuestion = shuffledData[currentIndex];
+    const isCorrect = currentQuestion.romaji.includes(userAnswer);
+
+    let feedbackHTML = '';
+    if (isCorrect) {
+        currentQuestion.correct++;
+        feedbackHTML = `<p class="font-bold text-green-600">정답!</p>`;
+        // [추가] 정답일 때 피드백 영역 배경색 변경
+        feedbackElement.classList.add('bg-green-50');
+    } else {
+        currentQuestion.incorrect++;
+        feedbackHTML = `<p class="font-bold text-red-600">오답! (정답: ${currentQuestion.romaji.join(' 또는 ')})</p>`;
+        // [추가] 오답일 때 피드백 영역 배경색 변경
+        feedbackElement.classList.add('bg-red-50');
+    }
+
+    // --- 대응하는 히라가나/가타카나 찾기 (pair 속성 사용) ---
+    const correspondingChar = currentQuestion.pair;
+    
+    let counterpartHTML = '';
+    if (correspondingChar) {
+        const counterpartType = currentQuestion.type === '히라가나' ? '가타카나' : '히라가나';
+        counterpartHTML = `<p class="text-slate-500 mt-1 text-base">위와 같은 소리를 가진 ${counterpartType}는 ${correspondingChar}입니다.</p>`;
+    }
+    // --- ---
+
+    feedbackHTML += `<p class="text-slate-600 mt-1">${currentQuestion.type} / ${currentQuestion.category}</p>`;
+    feedbackHTML += counterpartHTML; // 대응 문자 정보 추가
+    // [변경] 모바일을 고려하여 안내 문구 수정
+    feedbackHTML += `<p class="text-sm text-slate-400 mt-2">다음 문제로 넘어가려면 터치하거나 Enter를 누르세요.</p>`;
+    
+    feedbackElement.innerHTML = feedbackHTML;
+    showingAnswer = true;
+    answerInput.disabled = true;
+
+    // [추가] 다음 문제 버튼 보이기
+    nextButtonContainer.classList.remove('hidden');
+}
+
+/**
+ * 통계 모달을 표시하는 함수
+ */
+function showStats() {
+    const totalStats = quizData.reduce((acc, item) => {
+        acc.correct += item.correct;
+        acc.incorrect += item.incorrect;
+        return acc;
+    }, { correct: 0, incorrect: 0 });
+
+    const totalAttempts = totalStats.correct + totalStats.incorrect;
+
+    let statsHTML = `
+        <div class="mb-6 p-4 bg-slate-100 rounded-lg flex justify-around text-center">
+            <div>
+                <p class="text-sm text-slate-500">총 정답</p>
+                <p class="text-2xl font-bold text-green-600">${totalStats.correct}</p>
+            </div>
+            <div>
+                <p class="text-sm text-slate-500">총 오답</p>
+                <p class="text-2xl font-bold text-red-600">${totalStats.incorrect}</p>
+            </div>
+            <div>
+                <p class="text-sm text-slate-500">전체 학습</p>
+                <p class="text-2xl font-bold text-slate-800">${totalAttempts}</p>
+            </div>
+        </div>
+    `;
+    
+    statsHTML += `<div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">`;
+
+    // 카테고리별로 데이터 그룹화
+    const categorized = quizData.reduce((acc, item) => {
+        const key = `${item.type} - ${item.category}`;
+        if (!acc[key]) {
+            acc[key] = [];
+        }
+        acc[key].push(item);
+        return acc;
+    }, {});
+    
+    const sortedCategories = Object.keys(categorized).sort();
+
+    for (const category of sortedCategories) {
+        // 학습한 내용이 있는 카테고리만 표시
+        const hasLearnedItems = categorized[category].some(item => item.correct > 0 || item.incorrect > 0);
+        if (!hasLearnedItems) continue;
+
+        statsHTML += `<div class="bg-slate-50 p-4 rounded-lg">
+                            <h3 class="font-bold text-lg mb-3 text-slate-700 border-b pb-2">${category}</h3>
+                            <table class="w-full text-sm text-left">
+                                <thead class="text-xs text-slate-500 uppercase">
+                                    <tr>
+                                        <th class="py-2 px-1">문자</th>
+                                        <th class="py-2 px-1 text-center">정답</th>
+                                        <th class="py-2 px-1 text-center">오답</th>
+                                    </tr>
+                                </thead>
+                                <tbody>`;
+        
+        categorized[category].forEach(item => {
+            const total = item.correct + item.incorrect;
+            if (total === 0) return; // 학습하지 않은 문자는 통계에 표시하지 않음
+            
+            const rowClass = item.incorrect > 0 ? 'bg-red-50' : '';
+
+            statsHTML += `<tr class="border-t ${rowClass}">
+                            <td class="py-2 px-1 font-bold text-lg">${item.char}</td>
+                            <td class="py-2 px-1 text-center text-green-600">${item.correct}</td>
+                            <td class="py-2 px-1 text-center text-red-600">${item.incorrect}</td>
+                          </tr>`;
+        });
+
+        statsHTML += `</tbody></table></div>`;
+    }
+
+    statsHTML += `</div>`;
+    statsContent.innerHTML = statsHTML;
+    statsModal.classList.remove('hidden');
+}
+
+
+/**
+ * [추가] 다음 문제로 넘어가는 로직을 별도 함수로 분리
+ */
+function goToNextQuestion() {
+    if (showingAnswer) {
+        currentIndex++;
+        displayQuestion();
+    }
+}
+
+
+/**
+ * 키보드 입력을 처리하는 함수
+ */
+function handleKeyPress(e) {
+    // 통계 모달이 열려있으면 동작하지 않음
+    if (!statsModal.classList.contains('hidden')) {
+        return;
+    }
+
+    if (e.key === 'Enter') {
+        e.preventDefault(); // 폼 제출 방지
+        
+        if (showingAnswer) {
+            goToNextQuestion();
+        } else {
+            if (document.activeElement === answerInput) {
+                checkAnswer();
+            }
+        }
+    }
+}
+
+/**
+ * 퀴즈를 초기화하는 함수
+ */
+function init() {
+    shuffledData = createWeightedShuffledData();
+    displayQuestion();
+
+    document.addEventListener('keydown', handleKeyPress);
+    statsButton.addEventListener('click', showStats);
+    closeModalButton.addEventListener('click', () => statsModal.classList.add('hidden'));
+    
+    // [추가] 다음 문제로 넘어가는 이벤트 리스너 추가
+    nextQuestionButton.addEventListener('click', goToNextQuestion);
+    feedbackElement.addEventListener('click', goToNextQuestion);
+
+    statsModal.addEventListener('click', (e) => {
+        if (e.target === statsModal) {
+            statsModal.classList.add('hidden');
+        }
+    });
+}
+
+// 페이지 로드 시 퀴즈 시작
+init();
+
+</script>
+</body>
+</html>
