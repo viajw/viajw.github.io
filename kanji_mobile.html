@@ -61,7 +61,6 @@
             </button>
         </div>
 
-
         <div class="mt-6 flex justify-center">
             <button id="stats-button" class="bg-slate-500 hover:bg-slate-600 text-white font-bold py-2 px-6 rounded-lg transition-transform transform hover:scale-105">
                 학습 통계 보기
@@ -315,7 +314,7 @@ const quizData = [
 // --- 애플리케이션 상태 변수 ---
 let shuffledData = [];
 let currentIndex = 0;
-let showingAnswer = false; // 정답 확인 후 다음 문제로 넘어가는 상태 관리
+let showingAnswer = false;
 
 // --- DOM 요소 ---
 const char1Element = document.getElementById('char1');
@@ -326,16 +325,11 @@ const statsButton = document.getElementById('stats-button');
 const statsModal = document.getElementById('stats-modal');
 const closeModalButton = document.getElementById('close-modal-button');
 const statsContent = document.getElementById('stats-content');
-// [추가] 다음 문제 버튼 DOM 요소
 const nextButtonContainer = document.getElementById('next-button-container');
 const nextQuestionButton = document.getElementById('next-question-button');
 
-
 // --- 함수 ---
 
-/**
- * 배열을 무작위로 섞는 함수 (Fisher-Yates 알고리즘)
- */
 function shuffleArray(array) {
     for (let i = array.length - 1; i > 0; i--) {
         const j = Math.floor(Math.random() * (i + 1));
@@ -343,18 +337,12 @@ function shuffleArray(array) {
     }
 }
 
-/**
- * 지정된 비율에 따라 가중치가 적용된 문제 목록을 생성하는 함수
- */
 function createWeightedShuffledData() {
     const seionHatsuon = quizData.filter(item => item.category === '청음' || item.category === '발음');
     const dakuon = quizData.filter(item => item.category === '탁음');
     const handakuon = quizData.filter(item => item.category === '반탁음');
     const youon = quizData.filter(item => item.category === '요음');
-
     let weightedList = [];
-
-    // 각 카테고리 배열에서 무작위로 n개의 항목을 선택하는 도우미 함수
     const getRandomItems = (arr, count) => {
         let result = [];
         if (arr.length === 0) return result;
@@ -364,87 +352,58 @@ function createWeightedShuffledData() {
         }
         return result;
     };
-
-    // 설정된 비율에 따라 문제 추가 (총 20문제 기준)
-    weightedList.push(...getRandomItems(seionHatsuon, 12)); // 60%
-    weightedList.push(...getRandomItems(dakuon, 4));      // 20%
-    weightedList.push(...getRandomItems(handakuon, 1));      // 5%
-    weightedList.push(...getRandomItems(youon, 3));      // 15%
-
-    // 생성된 라운드를 무작위로 섞음
+    weightedList.push(...getRandomItems(seionHatsuon, 12));
+    weightedList.push(...getRandomItems(dakuon, 4));
+    weightedList.push(...getRandomItems(handakuon, 1));
+    weightedList.push(...getRandomItems(youon, 3));
     shuffleArray(weightedList);
     return weightedList;
 }
 
-/**
- * 다음 문제를 화면에 표시하는 함수
- */
 function displayQuestion() {
     showingAnswer = false;
-    // 한 라운드의 문제가 모두 출제되면 새로운 라운드를 생성
     if (currentIndex >= shuffledData.length) {
         shuffledData = createWeightedShuffledData();
-        currentIndex = 0; 
+        currentIndex = 0;
     }
-    
     const currentQuestion = shuffledData[currentIndex];
     char1Element.textContent = currentQuestion.char;
     char2Element.textContent = currentQuestion.char;
-    
     answerInput.value = '';
     answerInput.disabled = false;
     answerInput.focus();
     feedbackElement.innerHTML = '';
-    // [추가] 다음 문제 버튼 숨기기
     nextButtonContainer.classList.add('hidden');
-    // [추가] 피드백 영역 배경색 초기화
     feedbackElement.classList.remove('bg-green-50', 'bg-red-50');
-
 }
 
-/**
- * 사용자의 답변을 확인하는 함수
- */
 function checkAnswer() {
     const userAnswer = answerInput.value.trim().toLowerCase();
     if (!userAnswer) return;
-
     const currentQuestion = shuffledData[currentIndex];
     const isCorrect = currentQuestion.romaji.includes(userAnswer);
-
     let feedbackHTML = '';
     if (isCorrect) {
         currentQuestion.correct++;
         feedbackHTML = `<p class="font-bold text-green-600">정답!</p>`;
-        // [추가] 정답일 때 피드백 영역 배경색 변경
         feedbackElement.classList.add('bg-green-50');
     } else {
         currentQuestion.incorrect++;
         feedbackHTML = `<p class="font-bold text-red-600">오답! (정답: ${currentQuestion.romaji.join(' 또는 ')})</p>`;
-        // [추가] 오답일 때 피드백 영역 배경색 변경
         feedbackElement.classList.add('bg-red-50');
     }
-
-    // --- 대응하는 히라가나/가타카나 찾기 (pair 속성 사용) ---
     const correspondingChar = currentQuestion.pair;
-    
     let counterpartHTML = '';
     if (correspondingChar) {
         const counterpartType = currentQuestion.type === '히라가나' ? '가타카나' : '히라가나';
         counterpartHTML = `<p class="text-slate-500 mt-1 text-base">위와 같은 소리를 가진 ${counterpartType}는 ${correspondingChar}입니다.</p>`;
     }
-    // --- ---
-
     feedbackHTML += `<p class="text-slate-600 mt-1">${currentQuestion.type} / ${currentQuestion.category}</p>`;
-    feedbackHTML += counterpartHTML; // 대응 문자 정보 추가
-    // [변경] 모바일을 고려하여 안내 문구 수정
+    feedbackHTML += counterpartHTML;
     feedbackHTML += `<p class="text-sm text-slate-400 mt-2">다음 문제로 넘어가려면 터치하거나 Enter를 누르세요.</p>`;
-    
     feedbackElement.innerHTML = feedbackHTML;
     showingAnswer = true;
     answerInput.disabled = true;
-
-    // [추가] 다음 문제 버튼 보이기
     nextButtonContainer.classList.remove('hidden');
 }
 
@@ -457,9 +416,7 @@ function showStats() {
         acc.incorrect += item.incorrect;
         return acc;
     }, { correct: 0, incorrect: 0 });
-
     const totalAttempts = totalStats.correct + totalStats.incorrect;
-
     let statsHTML = `
         <div class="mb-6 p-4 bg-slate-100 rounded-lg flex justify-around text-center">
             <div>
@@ -476,10 +433,8 @@ function showStats() {
             </div>
         </div>
     `;
-    
     statsHTML += `<div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">`;
 
-    // 카테고리별로 데이터 그룹화
     const categorized = quizData.reduce((acc, item) => {
         const key = `${item.type} - ${item.category}`;
         if (!acc[key]) {
@@ -489,10 +444,28 @@ function showStats() {
         return acc;
     }, {});
     
-    const sortedCategories = Object.keys(categorized).sort();
+    // --- [변경] 통계 표시 순서를 고정하기 위한 배열 ---
+    const categoryOrder = [
+        '히라가나 - 청음',
+        '히라가나 - 탁음',
+        '히라가나 - 반탁음',
+        '히라가나 - 요음',
+        '히라가나 - 발음',
+        '가타카나 - 청음',
+        '가타카나 - 탁음',
+        '가타카나 - 반탁음',
+        '가타카나 - 요음',
+        '가타카나 - 발음'
+    ];
+    // --- ---
 
-    for (const category of sortedCategories) {
-        // 학습한 내용이 있는 카테고리만 표시
+    // [변경] 기존 sortedCategories.forEach 대신 정의된 순서(categoryOrder)로 반복
+    for (const category of categoryOrder) {
+        // 해당 카테고리에 학습 데이터가 없으면 건너뜀
+        if (!categorized[category]) {
+            continue;
+        }
+
         const hasLearnedItems = categorized[category].some(item => item.correct > 0 || item.incorrect > 0);
         if (!hasLearnedItems) continue;
 
@@ -510,7 +483,7 @@ function showStats() {
         
         categorized[category].forEach(item => {
             const total = item.correct + item.incorrect;
-            if (total === 0) return; // 학습하지 않은 문자는 통계에 표시하지 않음
+            if (total === 0) return;
             
             const rowClass = item.incorrect > 0 ? 'bg-red-50' : '';
 
@@ -529,10 +502,6 @@ function showStats() {
     statsModal.classList.remove('hidden');
 }
 
-
-/**
- * [추가] 다음 문제로 넘어가는 로직을 별도 함수로 분리
- */
 function goToNextQuestion() {
     if (showingAnswer) {
         currentIndex++;
@@ -540,19 +509,12 @@ function goToNextQuestion() {
     }
 }
 
-
-/**
- * 키보드 입력을 처리하는 함수
- */
 function handleKeyPress(e) {
-    // 통계 모달이 열려있으면 동작하지 않음
     if (!statsModal.classList.contains('hidden')) {
         return;
     }
-
     if (e.key === 'Enter') {
-        e.preventDefault(); // 폼 제출 방지
-        
+        e.preventDefault();
         if (showingAnswer) {
             goToNextQuestion();
         } else {
@@ -563,21 +525,14 @@ function handleKeyPress(e) {
     }
 }
 
-/**
- * 퀴즈를 초기화하는 함수
- */
 function init() {
     shuffledData = createWeightedShuffledData();
     displayQuestion();
-
     document.addEventListener('keydown', handleKeyPress);
     statsButton.addEventListener('click', showStats);
     closeModalButton.addEventListener('click', () => statsModal.classList.add('hidden'));
-    
-    // [추가] 다음 문제로 넘어가는 이벤트 리스너 추가
     nextQuestionButton.addEventListener('click', goToNextQuestion);
     feedbackElement.addEventListener('click', goToNextQuestion);
-
     statsModal.addEventListener('click', (e) => {
         if (e.target === statsModal) {
             statsModal.classList.add('hidden');
@@ -585,7 +540,6 @@ function init() {
     });
 }
 
-// 페이지 로드 시 퀴즈 시작
 init();
 
 </script>
