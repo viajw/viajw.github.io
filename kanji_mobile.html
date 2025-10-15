@@ -9,38 +9,19 @@
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+JP:wght@400;700&family=Noto+Serif+JP:wght@400;700&display=swap" rel="stylesheet">
     <style>
-        /* Noto Serif for Mincho style */
-        .font-noto-serif {
-            font-family: 'Noto Serif JP', serif;
-        }
-        /* Noto Sans for Gothic style */
-        .font-noto-sans {
-            font-family: 'Noto Sans JP', sans-serif;
-        }
-        /* 기본 폰트를 좀 더 부드러운 것으로 설정 */
-        body {
-            font-family: 'Inter', 'Pretendard', sans-serif;
-        }
-        /* 스크롤바 디자인 */
-        ::-webkit-scrollbar {
-            width: 8px;
-        }
-        ::-webkit-scrollbar-track {
-            background: #f1f1f1;
-        }
-        ::-webkit-scrollbar-thumb {
-            background: #888;
-            border-radius: 4px;
-        }
-        ::-webkit-scrollbar-thumb:hover {
-            background: #555;
-        }
+        .font-noto-serif { font-family: 'Noto Serif JP', serif; }
+        .font-noto-sans { font-family: 'Noto Sans JP', sans-serif; }
+        body { font-family: 'Inter', 'Pretendard', sans-serif; }
+        ::-webkit-scrollbar { width: 8px; }
+        ::-webkit-scrollbar-track { background: #f1f1f1; }
+        ::-webkit-scrollbar-thumb { background: #888; border-radius: 4px; }
+        ::-webkit-scrollbar-thumb:hover { background: #555; }
     </style>
 </head>
 <body class="bg-slate-100 flex items-center justify-center min-h-screen">
     <div class="w-full max-w-xl mx-auto p-4 md:p-8 bg-white rounded-2xl shadow-lg px-4">
         <h1 class="text-3xl font-bold text-center text-slate-800 mb-2">헵번식 로마자 연습</h1>
-        <p class="text-center text-slate-500 mb-6">아래 문자의 로마자 표기를 입력하고 Enter를 누르세요.</p>
+        <p class="text-center text-slate-500 mb-6">아래 문자의 로마자 표기를 입력하고 '확인'을 누르세요.</p>
 
         <div id="question-display" class="text-6xl md:text-8xl font-bold text-center my-8 text-slate-900 select-none">
             <span id="char1" class="font-noto-serif"></span>
@@ -50,6 +31,12 @@
 
         <div class="relative">
             <input type="text" id="answer-input" class="w-full text-2xl p-4 border-2 border-slate-300 rounded-lg text-center focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all" placeholder="입력하세요" autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false">
+        </div>
+
+        <div id="check-button-container" class="mt-4 flex justify-center">
+             <button id="check-answer-button" class="bg-green-500 hover:bg-green-600 text-white font-bold py-3 px-8 rounded-lg transition-transform transform hover:scale-105 w-full md:w-auto">
+                확인
+            </button>
         </div>
 
         <div id="feedback" class="mt-4 text-center text-xl min-h-[7rem] flex flex-col justify-center items-center p-2 rounded-lg cursor-pointer">
@@ -128,11 +115,7 @@ const quizData = [
     { char: 'ろ', romaji: ['ro'], type: '히라가나', category: '청음', correct: 0, incorrect: 0, pair: 'ロ' },
     { char: 'わ', romaji: ['wa'], type: '히라가나', category: '청음', correct: 0, incorrect: 0, pair: 'ワ' },
     { char: 'を', romaji: ['wo', 'o'], type: '히라가나', category: '청음', correct: 0, incorrect: 0, pair: 'ヲ' },
-    
-    // 히라가나 발음 (1)
     { char: 'ん', romaji: ['nn', 'n'], type: '히라가나', category: '발음', correct: 0, incorrect: 0, pair: 'ン' },
-    
-    // 히라가나 탁음 (20)
     { char: 'が', romaji: ['ga'], type: '히라가나', category: '탁음', correct: 0, incorrect: 0, pair: 'ガ' },
     { char: 'ぎ', romaji: ['gi'], type: '히라가나', category: '탁음', correct: 0, incorrect: 0, pair: 'ギ' },
     { char: 'ぐ', romaji: ['gu'], type: '히라가나', category: '탁음', correct: 0, incorrect: 0, pair: 'グ' },
@@ -153,15 +136,11 @@ const quizData = [
     { char: 'ぶ', romaji: ['bu'], type: '히라가나', category: '탁음', correct: 0, incorrect: 0, pair: 'ブ' },
     { char: 'べ', romaji: ['be'], type: '히라가나', category: '탁음', correct: 0, incorrect: 0, pair: 'ベ' },
     { char: 'ぼ', romaji: ['bo'], type: '히라가나', category: '탁음', correct: 0, incorrect: 0, pair: 'ボ' },
-
-    // 히라가나 반탁음 (5)
     { char: 'ぱ', romaji: ['pa'], type: '히라가나', category: '반탁음', correct: 0, incorrect: 0, pair: 'パ' },
     { char: 'ぴ', romaji: ['pi'], type: '히라가나', category: '반탁음', correct: 0, incorrect: 0, pair: 'ピ' },
     { char: 'ぷ', romaji: ['pu'], type: '히라가나', category: '반탁음', correct: 0, incorrect: 0, pair: 'プ' },
     { char: 'ぺ', romaji: ['pe'], type: '히라가나', category: '반탁음', correct: 0, incorrect: 0, pair: 'ペ' },
     { char: 'ぽ', romaji: ['po'], type: '히라가나', category: '반탁음', correct: 0, incorrect: 0, pair: 'ポ' },
-
-    // 히라가나 요음 (33)
     { char: 'きゃ', romaji: ['kya'], type: '히라가나', category: '요음', correct: 0, incorrect: 0, pair: 'キャ' },
     { char: 'きゅ', romaji: ['kyu'], type: '히라가나', category: '요음', correct: 0, incorrect: 0, pair: 'キュ' },
     { char: 'きょ', romaji: ['kyo'], type: '히라가나', category: '요음', correct: 0, incorrect: 0, pair: 'キョ' },
@@ -195,8 +174,6 @@ const quizData = [
     { char: 'ぴゃ', romaji: ['pya'], type: '히라가나', category: '요음', correct: 0, incorrect: 0, pair: 'ピャ' },
     { char: 'ぴゅ', romaji: ['pyu'], type: '히라가나', category: '요음', correct: 0, incorrect: 0, pair: 'ピュ' },
     { char: 'ぴょ', romaji: ['pyo'], type: '히라가나', category: '요음', correct: 0, incorrect: 0, pair: 'ピョ' },
-
-    // 가타카나 청음 (46)
     { char: 'ア', romaji: ['a'], type: '가타카나', category: '청음', correct: 0, incorrect: 0, pair: 'あ' },
     { char: 'イ', romaji: ['i'], type: '가타카나', category: '청음', correct: 0, incorrect: 0, pair: 'い' },
     { char: 'ウ', romaji: ['u'], type: '가타카나', category: '청음', correct: 0, incorrect: 0, pair: 'う' },
@@ -242,11 +219,7 @@ const quizData = [
     { char: 'ロ', romaji: ['ro'], type: '가타카나', category: '청음', correct: 0, incorrect: 0, pair: 'ろ' },
     { char: 'ワ', romaji: ['wa'], type: '가타카나', category: '청음', correct: 0, incorrect: 0, pair: 'わ' },
     { char: 'ヲ', romaji: ['wo', 'o'], type: '가타카나', category: '청음', correct: 0, incorrect: 0, pair: 'を' },
-
-    // 가타카나 발음 (1)
     { char: 'ン', romaji: ['nn', 'n'], type: '가타카나', category: '발음', correct: 0, incorrect: 0, pair: 'ん' },
-
-    // 가타카나 탁음 (20)
     { char: 'ガ', romaji: ['ga'], type: '가타카나', category: '탁음', correct: 0, incorrect: 0, pair: 'が' },
     { char: 'ギ', romaji: ['gi'], type: '가타카나', category: '탁음', correct: 0, incorrect: 0, pair: 'ぎ' },
     { char: 'グ', romaji: ['gu'], type: '가타카나', category: '탁음', correct: 0, incorrect: 0, pair: 'ぐ' },
@@ -267,15 +240,11 @@ const quizData = [
     { char: 'ブ', romaji: ['bu'], type: '가타카나', category: '탁음', correct: 0, incorrect: 0, pair: 'ぶ' },
     { char: 'ベ', romaji: ['be'], type: '가타카나', category: '탁음', correct: 0, incorrect: 0, pair: 'べ' },
     { char: 'ボ', romaji: ['bo'], type: '가타카나', category: '탁음', correct: 0, incorrect: 0, pair: 'ぼ' },
-
-    // 가타카나 반탁음 (5)
     { char: 'パ', romaji: ['pa'], type: '가타카나', category: '반탁음', correct: 0, incorrect: 0, pair: 'ぱ' },
     { char: 'ピ', romaji: ['pi'], type: '가타카나', category: '반탁음', correct: 0, incorrect: 0, pair: 'ぴ' },
     { char: 'プ', romaji: ['pu'], type: '가타카나', category: '반탁음', correct: 0, incorrect: 0, pair: 'ぷ' },
     { char: 'ペ', romaji: ['pe'], type: '가타카나', category: '반탁음', correct: 0, incorrect: 0, pair: 'ぺ' },
     { char: 'ポ', romaji: ['po'], type: '가타카나', category: '반탁음', correct: 0, incorrect: 0, pair: 'ぽ' },
-
-    // 가타카나 요음 (33)
     { char: 'キャ', romaji: ['kya'], type: '가타카나', category: '요음', correct: 0, incorrect: 0, pair: 'きゃ' },
     { char: 'キュ', romaji: ['kyu'], type: '가타카나', category: '요음', correct: 0, incorrect: 0, pair: 'きゅ' },
     { char: 'キョ', romaji: ['kyo'], type: '가타카나', category: '요음', correct: 0, incorrect: 0, pair: 'きょ' },
@@ -327,6 +296,9 @@ const closeModalButton = document.getElementById('close-modal-button');
 const statsContent = document.getElementById('stats-content');
 const nextButtonContainer = document.getElementById('next-button-container');
 const nextQuestionButton = document.getElementById('next-question-button');
+// [추가] 확인 버튼 DOM 요소
+const checkButtonContainer = document.getElementById('check-button-container');
+const checkAnswerButton = document.getElementById('check-answer-button');
 
 // --- 함수 ---
 
@@ -373,7 +345,11 @@ function displayQuestion() {
     answerInput.disabled = false;
     answerInput.focus();
     feedbackElement.innerHTML = '';
+    
+    // [변경] 버튼 표시 상태 관리
     nextButtonContainer.classList.add('hidden');
+    checkButtonContainer.classList.remove('hidden'); 
+    
     feedbackElement.classList.remove('bg-green-50', 'bg-red-50');
 }
 
@@ -404,12 +380,12 @@ function checkAnswer() {
     feedbackElement.innerHTML = feedbackHTML;
     showingAnswer = true;
     answerInput.disabled = true;
+
+    // [변경] 버튼 표시 상태 관리
     nextButtonContainer.classList.remove('hidden');
+    checkButtonContainer.classList.add('hidden');
 }
 
-/**
- * 통계 모달을 표시하는 함수
- */
 function showStats() {
     const totalStats = quizData.reduce((acc, item) => {
         acc.correct += item.correct;
@@ -419,81 +395,51 @@ function showStats() {
     const totalAttempts = totalStats.correct + totalStats.incorrect;
     let statsHTML = `
         <div class="mb-6 p-4 bg-slate-100 rounded-lg flex justify-around text-center">
-            <div>
-                <p class="text-sm text-slate-500">총 정답</p>
-                <p class="text-2xl font-bold text-green-600">${totalStats.correct}</p>
-            </div>
-            <div>
-                <p class="text-sm text-slate-500">총 오답</p>
-                <p class="text-2xl font-bold text-red-600">${totalStats.incorrect}</p>
-            </div>
-            <div>
-                <p class="text-sm text-slate-500">전체 학습</p>
-                <p class="text-2xl font-bold text-slate-800">${totalAttempts}</p>
-            </div>
+            <div><p class="text-sm text-slate-500">총 정답</p><p class="text-2xl font-bold text-green-600">${totalStats.correct}</p></div>
+            <div><p class="text-sm text-slate-500">총 오답</p><p class="text-2xl font-bold text-red-600">${totalStats.incorrect}</p></div>
+            <div><p class="text-sm text-slate-500">전체 학습</p><p class="text-2xl font-bold text-slate-800">${totalAttempts}</p></div>
         </div>
     `;
     statsHTML += `<div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">`;
-
     const categorized = quizData.reduce((acc, item) => {
         const key = `${item.type} - ${item.category}`;
-        if (!acc[key]) {
-            acc[key] = [];
-        }
+        if (!acc[key]) acc[key] = [];
         acc[key].push(item);
         return acc;
     }, {});
     
-    // --- [변경] 통계 표시 순서를 고정하기 위한 배열 ---
     const categoryOrder = [
-        '히라가나 - 청음',
-        '히라가나 - 탁음',
-        '히라가나 - 반탁음',
-        '히라가나 - 요음',
-        '히라가나 - 발음',
-        '가타카나 - 청음',
-        '가타카나 - 탁음',
-        '가타카나 - 반탁음',
-        '가타카나 - 요음',
-        '가타카나 - 발음'
+        '히라가나 - 청음', '히라가나 - 탁음', '히라가나 - 반탁음', '히라가나 - 요음', '히라가나 - 발음',
+        '가타카나 - 청음', '가타카나 - 탁음', '가타카나 - 반탁음', '가타카나 - 요음', '가타카나 - 발음'
     ];
-    // --- ---
 
-    // [변경] 기존 sortedCategories.forEach 대신 정의된 순서(categoryOrder)로 반복
     for (const category of categoryOrder) {
-        // 해당 카테고리에 학습 데이터가 없으면 건너뜀
-        if (!categorized[category]) {
-            continue;
-        }
-
+        if (!categorized[category]) continue;
         const hasLearnedItems = categorized[category].some(item => item.correct > 0 || item.incorrect > 0);
         if (!hasLearnedItems) continue;
 
         statsHTML += `<div class="bg-slate-50 p-4 rounded-lg">
-                            <h3 class="font-bold text-lg mb-3 text-slate-700 border-b pb-2">${category}</h3>
-                            <table class="w-full text-sm text-left">
-                                <thead class="text-xs text-slate-500 uppercase">
-                                    <tr>
-                                        <th class="py-2 px-1">문자</th>
-                                        <th class="py-2 px-1 text-center">정답</th>
-                                        <th class="py-2 px-1 text-center">오답</th>
-                                    </tr>
-                                </thead>
-                                <tbody>`;
+            <h3 class="font-bold text-lg mb-3 text-slate-700 border-b pb-2">${category}</h3>
+            <table class="w-full text-sm text-left">
+                <thead class="text-xs text-slate-500 uppercase">
+                    <tr>
+                        <th class="py-2 px-1">문자</th>
+                        <th class="py-2 px-1 text-center">정답</th>
+                        <th class="py-2 px-1 text-center">오답</th>
+                    </tr>
+                </thead>
+                <tbody>`;
         
         categorized[category].forEach(item => {
             const total = item.correct + item.incorrect;
             if (total === 0) return;
-            
             const rowClass = item.incorrect > 0 ? 'bg-red-50' : '';
-
             statsHTML += `<tr class="border-t ${rowClass}">
-                            <td class="py-2 px-1 font-bold text-lg">${item.char}</td>
-                            <td class="py-2 px-1 text-center text-green-600">${item.correct}</td>
-                            <td class="py-2 px-1 text-center text-red-600">${item.incorrect}</td>
-                          </tr>`;
+                <td class="py-2 px-1 font-bold text-lg">${item.char}</td>
+                <td class="py-2 px-1 text-center text-green-600">${item.correct}</td>
+                <td class="py-2 px-1 text-center text-red-600">${item.incorrect}</td>
+            </tr>`;
         });
-
         statsHTML += `</tbody></table></div>`;
     }
 
@@ -510,17 +456,13 @@ function goToNextQuestion() {
 }
 
 function handleKeyPress(e) {
-    if (!statsModal.classList.contains('hidden')) {
-        return;
-    }
+    if (!statsModal.classList.contains('hidden')) return;
+    
+    // [변경] Enter는 정답 확인 후 '다음 문제'로 넘어갈 때만 작동
     if (e.key === 'Enter') {
         e.preventDefault();
         if (showingAnswer) {
             goToNextQuestion();
-        } else {
-            if (document.activeElement === answerInput) {
-                checkAnswer();
-            }
         }
     }
 }
@@ -531,17 +473,18 @@ function init() {
     document.addEventListener('keydown', handleKeyPress);
     statsButton.addEventListener('click', showStats);
     closeModalButton.addEventListener('click', () => statsModal.classList.add('hidden'));
+    
+    // [변경] '확인' 버튼과 '다음 문제' 버튼 이벤트 리스너 분리
+    checkAnswerButton.addEventListener('click', checkAnswer);
     nextQuestionButton.addEventListener('click', goToNextQuestion);
+
     feedbackElement.addEventListener('click', goToNextQuestion);
     statsModal.addEventListener('click', (e) => {
-        if (e.target === statsModal) {
-            statsModal.classList.add('hidden');
-        }
+        if (e.target === statsModal) statsModal.classList.add('hidden');
     });
 }
 
 init();
-
 </script>
 </body>
 </html>
