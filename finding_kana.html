@@ -78,6 +78,21 @@
             color: #1e40af; /* text-blue-800 */
             font-weight: 700;
         }
+
+        /* ★★★ [추가] 모바일 화면 대응 ★★★ */
+        @media (max-width: 480px) {
+            #options-container {
+                /* 버튼 사이의 간격을 더 줄입니다 (Tailwind 'gap-1' 수준) */
+                gap: 0.25rem;
+            }
+            .kana-button {
+                /* 글자 크기를 줄입니다 (예: 24px) */
+                font-size: 1.5rem;
+                /* 패딩을 줄입니다 (예: 8px) */
+                padding: 0.5rem;
+            }
+        }
+        
     </style>
 </head>
 <body class="bg-slate-100 flex items-center justify-center min-h-screen">
@@ -672,4 +687,5 @@ init();
 
 </script>
 </body>
+
 </html>
