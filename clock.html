@@ -1,0 +1,309 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>일본어 시간 읽기</title>
+
+    <link rel="icon" type="image/png" sizes="32x32" href="favicon.png">
+    <link rel="apple-touch-icon" sizes="180x180" href="apple_icon.png">
+    <link rel="icon" type="image/png" sizes="192x192" href="android_icon.png">
+    
+    <link rel="stylesheet" as="style" crossorigin href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/static/pretendard.min.css" />
+
+    <style>
+        /* --- 1. 템플릿 기본 스타일 리셋 --- */
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
+
+        /* --- 2. 템플릿 전체 페이지 스타일 --- */
+        body {
+            font-family: "Pretendard", -apple-system, BlinkMacSystemFont, "Malgun Gothic", "맑은 고딕", "Segoe UI", Roboto, Oxygen, Ubuntu, Cantarell, "Open Sans", "Helvetica Neue", sans-serif;
+            background-color: #f1f5f9;
+            color: #333;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            min-height: 100vh;
+            padding: 20px;
+        }
+
+        /* --- 3. 템플릿 헤더 (페이지 제목) --- */
+        .header {
+            text-align: center;
+            margin-bottom: 40px;
+        }
+        .header h1 {
+            font-size: 2.5rem;
+            color: #2c3e50;
+        }
+        .header p {
+            font-size: 1.1rem;
+            color: #7f8c8d;
+            margin-top: 10px;
+        }
+
+        /* --- 4. 템플릿 메인 컨테이너 --- */
+        .menu-container {
+            width: 100%;
+            max-width: 600px; /* 템플릿과 동일한 최대 너비 */
+        }
+
+        /* --- 5. 템플릿의 카드 스타일 (.menu-item) --- */
+        /* 이 클래스를 퀴즈 박스로 활용합니다. */
+        .menu-item {
+            background-color: #ffffff;
+            border-radius: 10px;
+            margin-bottom: 15px;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
+            
+            /* --- 퀴즈에 맞게 추가된 스타일 --- */
+            /* 기존 퀴즈의 padding과 text-align 적용 */
+            padding: 2.5rem;
+            text-align: center;
+        }
+
+        /* --- 6. 템플릿 하단 크레딧 텍스트 --- */
+        .credit-text {
+            font-size: 1.1rem;
+            color: #7f8c8d;
+            text-align: center;
+            margin-top: 25px;
+        }
+        
+        /* --- [추가] 돌아가기 링크 스타일 --- */
+        .back-link {
+            display: block;
+            text-align: center;
+            margin-top: 25px;
+            font-size: 1rem;
+            color: #3498db;
+            text-decoration: none;
+            font-weight: 500;
+        }
+        .back-link:hover {
+            text-decoration: underline;
+        }
+
+
+        /* --- 7. 기존 퀴즈의 내부 요소 스타일 --- */
+        /* (폰트, 배경색 등은 body에서 상속받으므로 제외) */
+        
+        /* 시간 표시 영역 (문제) */
+        #time-display {
+            font-size: 3rem;
+            font-weight: bold;
+            color: #007bff;
+            margin: 1.5rem 0;
+            letter-spacing: 2px;
+        }
+
+        /* 입력 필드 */
+        #answer-input {
+            width: calc(100% - 22px);
+            padding: 12px;
+            font-size: 1.2rem;
+            border: 2px solid #ddd;
+            border-radius: 8px;
+            margin-bottom: 1rem;
+            box-sizing: border-box;
+            /* 템플릿의 Pretendard 폰트를 상속받음 */
+        }
+        #answer-input:focus {
+            border-color: #007bff;
+            outline: none;
+        }
+
+        /* 버튼 기본 스타일 */
+        .btn {
+            padding: 12px 20px;
+            font-size: 1.1rem;
+            border: none;
+            border-radius: 8px;
+            cursor: pointer;
+            transition: background-color 0.3s ease;
+            font-weight: 600;
+            /* 템플릿의 Pretendard 폰트를 상속받음 */
+        }
+
+        /* 확인 버튼 */
+        #check-btn {
+            background-color: #28a745;
+            color: white;
+            margin-right: 10px;
+        }
+        #check-btn:hover {
+            background-color: #218838;
+        }
+
+        /* 다음 문제 버튼 */
+        #next-btn {
+            background-color: #007bff;
+            color: white;
+        }
+        #next-btn:hover {
+            background-color: #0056b3;
+        }
+
+        /* 결과 메시지 */
+        #result-message {
+            margin-top: 1.5rem;
+            font-size: 1.2rem;
+            font-weight: bold;
+            min-height: 1.5em; 
+            line-height: 1.6;
+        }
+        
+        /* 정답/오답 클래스 */
+        .correct {
+            color: #28a745;
+        }
+        .wrong {
+            color: #dc3545;
+        }
+    </style>
+</head>
+<body>
+
+    <header class="header">
+        <h1>일본어 시간 읽기</h1>
+        <p>제시된 시간을 일본어 Romaji로 입력하세요.</p>
+    </header>
+
+    <main class="menu-container">
+        
+        <div class="menu-item">
+            
+            <div id="time-display">12시 30분</div>
+            
+            <input type"text" id="answer-input" placeholder="예: juuniji sanjuppun">
+            
+            <div>
+                <button id="check-btn" class="btn">확인</button>
+                <button id="next-btn" class="btn">다음 문제</button>
+            </div>
+            
+            <p id="result-message"></p>
+            </div>
+
+        <a href="index.html" class="back-link">메인 메뉴로 돌아가기</a>
+    </main>
+
+    <p class="credit-text">made by jw</p>
+
+
+    <script>
+        const timeDisplay = document.getElementById('time-display');
+        const answerInput = document.getElementById('answer-input');
+        const checkBtn = document.getElementById('check-btn');
+        const nextBtn = document.getElementById('next-btn');
+        const resultMessage = document.getElementById('result-message');
+
+        let currentCorrectAnswer = '';
+        let currentCorrectHiragana = ''; 
+
+        function getHourRomaji(hour) {
+            const hours = {
+                1: 'ichiji', 2: 'niji', 3: 'sanji', 4: 'yoji', 5: 'goji', 6: 'rokuji',
+                7: 'shichiji', 8: 'hachiji', 9: 'kuji', 10: 'juuji', 11: 'juuichiji', 12: 'juuniji'
+            };
+            return hours[hour];
+        }
+
+        function getMinuteRomaji(minute) {
+            const baseMinutes = {
+                1: 'ippun', 2: 'nifun', 3: 'sanpun', 4: 'yonpun', 5: 'gofun',
+                6: 'roppun', 7: 'nanafun', 8: 'happun', 9: 'kyuufun', 10: 'juppun'
+            };
+            if (minute <= 10) return baseMinutes[minute];
+            if (minute == 60) return 'rokujuppun';
+            const tens = Math.floor(minute / 10);
+            const ones = minute % 10;
+            if (ones === 0) {
+                if (tens === 2) return 'nijuuppun';
+                if (tens === 3) return 'sanjuppun';
+                if (tens === 4) return 'yonjuppun';
+                if (tens === 5) return 'gojuppun';
+            }
+            const tensPrefix = { 1: 'juu', 2: 'nijuu', 3: 'sanjuu', 4: 'yonjuu', 5: 'gojuu' }[tens];
+            const onesSuffix = baseMinutes[ones];
+            return `${tensPrefix}${onesSuffix}`;
+        }
+        
+        function getHourHiragana(hour) {
+            const hours = {
+                1: 'いちじ', 2: 'にじ', 3: 'さんじ', 4: 'よじ', 5: 'ごじ', 6: 'ろくじ',
+                7: 'しちじ', 8: 'はちじ', 9: 'くじ', 10: 'じゅうじ', 11: 'じゅういちじ', 12: 'じゅうにじ'
+            };
+            return hours[hour];
+        }
+
+        function getMinuteHiragana(minute) {
+            const baseMinutes = {
+                1: 'いっぷん', 2: 'にふん', 3: 'さんぷん', 4: 'よんぷん', 5: 'ごふん',
+                6: 'ろっぷん', 7: 'ななふん', 8: 'はっぷん', 9: 'きゅうふん', 10: 'じゅっぷん'
+            };
+            if (minute <= 10) return baseMinutes[minute];
+            if (minute == 60) return 'ろくじゅっぷん';
+            const tens = Math.floor(minute / 10);
+            const ones = minute % 10;
+            if (ones === 0) {
+                if (tens === 2) return 'にじゅっぷん';
+                if (tens === 3) return 'さんじゅっぷん';
+                if (tens === 4) return 'よんじゅっぷん';
+                if (tens === 5) return 'ごじゅう'
+            }
+            const tensPrefix = { 1: 'じゅう', 2: 'にじゅう', 3: 'さんじゅう', 4: 'よんじゅう', 5: 'ごじゅう' }[tens];
+            const onesSuffix = baseMinutes[ones];
+            return `${tensPrefix}${onesSuffix}`;
+        }
+
+        function generateQuestion() {
+            const randomHour = Math.floor(Math.random() * 12) + 1;
+            const randomMinute = Math.floor(Math.random() * 60) + 1;
+            timeDisplay.textContent = `${randomHour}시 ${randomMinute}분`;
+            const hourRomaji = getHourRomaji(randomHour);
+            const minuteRomaji = getMinuteRomaji(randomMinute);
+            currentCorrectAnswer = `${hourRomaji} ${minuteRomaji}`; 
+            const hourHiragana = getHourHiragana(randomHour);
+            const minuteHiragana = getMinuteHiragana(randomMinute);
+            currentCorrectHiragana = `${hourHiragana} ${minuteHiragana}`;
+            answerInput.value = '';
+            resultMessage.textContent = '';
+            resultMessage.className = '';
+            answerInput.focus();
+        }
+
+        function checkAnswer() {
+            const userAnswer = answerInput.value
+                .trim()
+                .toLowerCase()
+                .replace(/[- ]/g, ''); 
+            const correctAnswer = currentCorrectAnswer
+                .toLowerCase()
+                .replace(/[- ]/g, '');
+
+            if (userAnswer === correctAnswer) {
+                resultMessage.innerHTML = `정답!<br>(${currentCorrectHiragana})`;
+                resultMessage.className = 'correct';
+            } else {
+                resultMessage.innerHTML = `오답! 정답: ${currentCorrectAnswer}<br>(${currentCorrectHiragana})`;
+                resultMessage.className = 'wrong';
+            }
+        }
+
+        checkBtn.addEventListener('click', checkAnswer);
+        nextBtn.addEventListener('click', generateQuestion);
+        answerInput.addEventListener('keydown', function(event) {
+            if (event.key === 'Enter') {
+                checkAnswer();
+            }
+        });
+        document.addEventListener('DOMContentLoaded', generateQuestion);
+    </script>
+</body>
+</html>
