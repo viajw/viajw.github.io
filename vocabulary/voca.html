@@ -118,7 +118,7 @@
                     <table class="w-full min-w-full text-left">
                         <thead class="bg-gray-50 sticky top-0">
                             <tr>
-                                <th class="p-3 text-sm font-semibold text-gray-600">단어</th>
+                                <th class="p-3 text-sm font-semibold text-gray-600">문제 (단어)</th>
                                 <th class="p-3 text-sm font-semibold text-gray-600 text-center">정답</th>
                                 <th class="p-3 text-sm font-semibold text-gray-600 text-center">오답</th>
                             </tr>
@@ -342,20 +342,26 @@
 
                 // vocabList 순서대로 테이블 생성 (stats 객체는 순서를 보장하지 않음)
                 vocabList.forEach(item => {
-                    const word = item.word;
+                    const { word, meaning } = item;
                     const s = stats[word];
-                    
-                    // 12.d. 틀린 횟수가 1 이상이면 단어 빨간색
-                    const wordClass = s.incorrect > 0 ? 'text-red-600 font-semibold' : 'text-gray-900';
 
-                    const row = `
-                        <tr class="hover:bg-gray-50">
-                            <td class="p-3 text-sm ${wordClass}">${word}</td>
-                            <td class="p-3 text-sm text-gray-700 text-center">${s.correct}</td>
-                            <td class="p-3 text-sm text-gray-700 text-center">${s.incorrect}</td>
-                        </tr>
-                    `;
-                    statsTableBody.innerHTML += row;
+                    // 요청 사항 (1, 2): 정답 또는 오답 횟수가 1 이상인 (즉, 출제된) 문제만 표시
+                    if (s.correct > 0 || s.incorrect > 0) {
+                        
+                        // 12.d. 틀린 횟수가 1 이상이면 빨간색
+                        // 요청 사항 (1, 2): "단어의뜻 (단어)" 포맷으로 변경
+                        const itemClass = s.incorrect > 0 ? 'text-red-600 font-semibold' : 'text-gray-900';
+                        const itemText = `${meaning} (${word})`;
+
+                        const row = `
+                            <tr class="hover:bg-gray-50">
+                                <td class="p-3 text-sm ${itemClass}">${itemText}</td>
+                                <td class="p-3 text-sm text-gray-700 text-center">${s.correct}</td>
+                                <td class="p-3 text-sm text-gray-700 text-center">${s.incorrect}</td>
+                            </tr>
+                        `;
+                        statsTableBody.innerHTML += row;
+                    }
                 });
                 
                 // 12.a. 모달 팝업
@@ -414,3 +420,4 @@
 
 </body>
 </html>
+
