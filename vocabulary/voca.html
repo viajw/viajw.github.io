@@ -11,7 +11,7 @@
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/static/pretendard.min.css" />
     <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+JP:wght@400;500;700&display=swap" rel="stylesheet">
     
-    <!-- [수정됨] Tailwind CSS 설정 스크립트 (폰트 적용) -->
+    <!-- Tailwind CSS 설정 스크립트 (폰트 적용) -->
     <script>
         tailwind.config = {
             theme: {
@@ -19,7 +19,6 @@
                     // 2. 폰트 적용 (Tailwind 기본 폰트 재정의)
                     fontFamily: {
                         // 'sans'를 Pretendard와 Noto Sans JP로 재정의합니다.
-                        // 'font-sans' 클래스가 적용된 모든 요소는 이 폰트들을 우선 사용합니다.
                         sans: ['Pretendard', 'Noto Sans JP', '-apple-system', 'BlinkMacSystemFont', 'Segoe UI', 'Roboto', 'Helvetica Neue', 'Arial', 'sans-serif'],
                     },
                 },
@@ -56,7 +55,7 @@
         }
     </style>
 </head>
-<!-- [수정됨] body 태그에 font-sans 클래스를 적용하여 Tailwind config가 적용되도록 함 -->
+<!-- body 태그에 font-sans 클래스를 적용하여 Tailwind config가 적용되도록 함 -->
 <body class="bg-gray-100 flex items-center justify-center min-h-screen font-sans">
 
     <div class="container mx-auto max-w-2xl w-full p-4 sm:p-6">
@@ -65,14 +64,14 @@
             <!-- 15. 제목 및 16. 모드 변경 버튼 -->
             <div class="flex justify-between items-center mb-6">
                 <h1 id="main-title" class="text-2xl sm:text-3xl font-bold text-gray-800">
-                    VOCA
+                    Vocabulary Test
                 </h1>
                 <button id="toggle-mode-btn" class="text-xs sm:text-sm bg-gray-200 hover:bg-gray-300 text-gray-700 font-semibold py-2 px-3 rounded-lg transition-colors duration-200">
                     단어 ↔ 뜻
                 </button>
             </div>
 
-            <!-- 6. 문제 제시 영역 -->
+            <!-- 6. 문제 제시 영역 (글씨 크기 수정됨) -->
             <div id="question-container" class="bg-blue-50 border-l-4 border-blue-400 p-4 sm:p-6 rounded-lg mb-6 min-h-[80px] sm:min-h-[100px] flex items-center justify-center">
                 <p id="question-text" class="text-2xl sm:text-3xl font-semibold text-blue-900 text-center"></p>
             </div>
@@ -94,7 +93,7 @@
         </div>
     </div>
 
-    <!-- 12.a. 결과 확인 모달 -->
+    <!-- 12.a. 결과 확인 모달 (모달이 처음에 뜨는 문제 수정됨) -->
     <div id="results-modal" class="modal fixed inset-0 bg-gray-600 bg-opacity-50 overflow-y-auto h-full w-full items-center justify-center p-4">
         <div class="bg-white w-full max-w-lg mx-auto rounded-2xl shadow-lg">
             <!-- 모달 헤더 -->
@@ -109,7 +108,7 @@
             
             <!-- 모달 바디 -->
             <div class="p-6">
-                <!-- 12.b. 전체 통계 (요청사항: 숫자 색상 변경) -->
+                <!-- 12.b. 전체 통계 (숫자 색상 변경됨) -->
                 <div class="text-center mb-4">
                     <span class="text-lg font-semibold text-gray-700">전체 통계:</span>
                     <span id="total-stats" class="text-lg font-bold ml-2">정답 0 / 오답 0</span>
@@ -186,10 +185,12 @@
                     .map(line => line.trim())
                     .filter(line => line.length > 0 && !line.startsWith('# ')) // 7. # 주석 제외
                     .map(line => {
-                        const parts = line.split(',');
+                        // [수정됨] 구분자를 ','에서 ' - '로 변경
+                        const parts = line.split(' - '); 
                         if (parts.length >= 2) {
                             const word = parts[0].trim();
-                            const meaning = parts.slice(1).join(',').trim(); // 뜻 부분에 콤마가 있어도 합침
+                            // ' - ' 구분자 뒤의 모든 텍스트를 meaning으로 간주
+                            const meaning = parts.slice(1).join(' - ').trim(); 
                             return { word, meaning };
                         }
                         return null;
@@ -214,7 +215,6 @@
          */
         function resetStats() {
             vocabStats = {};
-            // [수정됨] 모드 변경 시에도 통계가 올바르게 초기화되도록 수정
             const keyProperty = currentMode === 'word-to-meaning' ? 'word' : 'meaning';
             vocabList.forEach(item => {
                 const key = item[keyProperty];
@@ -304,12 +304,10 @@
                 } else if (textLength > 10) {
                     button.style.fontSize = '0.9rem'; // 약간 작게
                 } else {
-                    // [수정됨] 텍스트가 짧을 때 기본값으로 리셋
                     button.style.fontSize = '';
                     button.style.lineHeight = '';
                 }
             } else {
-                // [수정됨] PC 화면일 때 기본값으로 리셋
                 button.style.fontSize = '';
                 button.style.lineHeight = '';
             }
@@ -368,12 +366,12 @@
         }
 
         /**
-         * 답변 후 모든 버튼 비활성화 및 포커스 제거
+         * 답변 후 모든 버튼 비활성화 및 포커스 제거 (포커스 음영 제거 수정됨)
          */
         function disableButtons() {
             Array.from(optionsContainer.children).forEach(btn => {
                 btn.disabled = true;
-                // [수정됨] 클릭 직후 포커스(음영) 제거
+                // 클릭 직후 포커스(음영) 제거
                 btn.blur();
             });
         }
@@ -384,10 +382,10 @@
         toggleModeBtn.onclick = () => {
             if (currentMode === 'word-to-meaning') {
                 currentMode = 'meaning-to-word';
-                mainTitle.textContent = 'VOCA (뜻 ➔ 단어)';
+                mainTitle.textContent = 'Vocabulary Test (뜻 ➔ 단어)';
             } else {
                 currentMode = 'word-to-meaning';
-                mainTitle.textContent = 'VOCA (단어 ➔ 뜻)';
+                mainTitle.textContent = 'Vocabulary Test (단어 ➔ 뜻)';
             }
             // 모드 변경 시 통계 초기화
             resetStats();
@@ -399,8 +397,7 @@
          * 11. 결과 확인 모달 표시
          */
         function showResults() {
-            // 12.b. 전체 통계
-            // 요청 사항: 정답/오답 숫자 색상 변경
+            // 12.b. 전체 통계 (숫자 색상 변경됨)
             totalStats.innerHTML = `
                 정답 <span class="text-green-500 font-bold">${totalCorrect}</span> / 
                 오답 <span class="text-red-500 font-bold">${totalIncorrect}</span>
@@ -413,7 +410,7 @@
                 statsTableHeader.textContent = '뜻 (단어)';
             }
 
-            // 12.c, d, e. 개별 통계 테이블 채우기
+            // 12.c, d, e. 개별 통계 테이블 채우기 (출제된 것만, 형식 변경, 배경색 변경)
             statsTableBody.innerHTML = '';
             
             // vocabList 순서대로 순회하며 통계 표시
@@ -471,14 +468,11 @@
 
 
         // 17. 초기 모드 제목 설정
-        mainTitle.textContent = 'VOCA (단어 ➔ 뜻)';
+        mainTitle.textContent = 'Vocabulary Test (단어 ➔ 뜻)';
         
         // 4. 페이지 로드 시 단어장 불러오기
         loadVocabulary();
     </script>
 </body>
 </html>
-
-
-
 
