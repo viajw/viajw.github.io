@@ -25,13 +25,16 @@ document.addEventListener('DOMContentLoaded', () => {
     };
     // ▲▲▲ 변경된 부분 ▲▲▲
 
-    // 4. vocabulary.txt 파일 불러오기 (변경 없음)
+    // 4. vocabulary.txt 파일 불러오기
     async function fetchVocabulary() {
         try {
-            const response = await fetch('vocabulary.txt');
-            if (!response.ok) {
-                throw new Error('vocabulary.txt 파일을 불러올 수 없습니다.');
-            }
+            // ▼▼▼ 이 줄을 이렇게 수정 ▼▼▼
+            const response = await fetch('vocabulary.txt', { cache: 'no-cache' });
+            // ▲▲▲ 수정 완료 ▲▲▲
+
+        if (!response.ok) {
+            throw new Error('vocabulary.txt 파일을 불러올 수 없습니다.');
+        }
             const text = await response.text();
             
             vocabulary = text.trim().split('\n')
@@ -196,3 +199,4 @@ document.addEventListener('DOMContentLoaded', () => {
     // 퀴즈 시작
     fetchVocabulary();
 });
+
