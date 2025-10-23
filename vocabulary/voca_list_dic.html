@@ -146,6 +146,13 @@
                 const wordCell = document.createElement('td');
                 wordCell.className = 'p-3 text-gray-900 word-cell'; 
 
+                // [수정됨] 하이라이트 기능 추가
+                wordCell.style.cursor = 'pointer'; // 클릭 가능 표시
+                wordCell.onclick = () => {
+                    // Tailwind의 연한 노란색 클래스(bg-yellow-100)를 토글
+                    row.classList.toggle('bg-yellow-100');
+                };
+
                 const wordContainer = document.createElement('div');
                 wordContainer.className = 'flex items-center justify-between';
 
@@ -164,7 +171,7 @@
                 linkButton.innerHTML = `<svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14"></path></svg>`;
                 
                 linkButton.onclick = (e) => {
-                    e.stopPropagation(); // 행 클릭 방지
+                    e.stopPropagation(); // [중요] 행 하이라이트가 같이 실행되는 것을 방지
                     openNaverDictionary(word); // 네이버 사전 열기
                 };
                 
@@ -258,7 +265,7 @@
             const spans = document.querySelectorAll('.meaning-span');
             spans.forEach(span => {
                 span.classList.toggle('text-transparent', isMeaningHidden);
-                span.classList.toggle('select-none', isMeaningHidden);
+                span.classList.toggle('select-none', isWordHidden);
             });
             toggleMeaningBtn.textContent = isMeaningHidden ? '뜻 보이기' : '뜻 가리기';
         });
