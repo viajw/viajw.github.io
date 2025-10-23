@@ -1,0 +1,284 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>단어장 (랜덤)</title>
+    <!-- 1. Tailwind CSS 로드 -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    
+    <!-- 2. Pretendard (한글/영어), Noto Sans JP (일본어) 웹 폰트 로드 -->
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/static/pretendard.min.css" />
+    <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+JP:wght@400;500;700&display=swap" rel="stylesheet">
+    
+    <!-- Tailwind CSS 설정 스크립트 (폰트 적용) -->
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    // 2. 폰트 적용 (Tailwind 기본 폰트 재정의)
+                    fontFamily: {
+                        // 'sans'를 Pretendard와 Noto Sans JP로 재정의합니다.
+                        sans: ['Pretendard', 'Noto Sans JP', '-apple-system', 'BlinkMacSystemFont', 'Segoe UI', 'Roboto', 'Helvetica Neue', 'Arial', 'sans-serif'],
+                    },
+                },
+            },
+        }
+    </script>
+</head>
+<!-- body 태그에 font-sans 클래스를 적용하여 Tailwind config가 적용되도록 함 -->
+<body class="bg-gray-100 flex items-center justify-center min-h-screen font-sans p-4 sm:p-6">
+
+    <div class="container mx-auto max-w-2xl w-full">
+        <div class="bg-white rounded-2xl shadow-xl p-6 sm:p-8">
+            
+            <!-- 제목 -->
+            <div class="flex flex-wrap justify-between items-center gap-4 mb-6 border-b border-gray-200 pb-5">
+                <h1 id="main-title" class="text-2xl sm:text-3xl font-bold text-gray-800">
+                    단어장 (랜덤)
+                </h1>
+                <!-- 토글 버튼 영역 -->
+                <div class="flex gap-2">
+                    <button id="toggle-word-btn" class="text-xs sm:text-sm bg-gray-200 hover:bg-gray-300 text-gray-700 font-semibold py-2 px-3 rounded-lg transition-colors duration-200">
+                        단어 가리기
+                    </button>
+                    <button id="toggle-meaning-btn" class="text-xs sm:text-sm bg-gray-200 hover:bg-gray-300 text-gray-700 font-semibold py-2 px-3 rounded-lg transition-colors duration-200">
+                        뜻 가리기
+                    </button>
+                </div>
+            </div>
+
+            <!-- 단어장 테이블 -->
+            <div class="overflow-y-auto max-h-[70vh] border rounded-lg"> <!-- 높이 조절 -->
+                <table class="min-w-full divide-y divide-gray-200">
+                    <thead class="bg-gray-50 sticky top-0">
+                        <tr>
+                            <th scope="col" class="p-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                                단어
+                            </th>
+                            <th scope="col" class="p-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                                뜻
+                            </th>
+                        </tr>
+                    </thead>
+                    <tbody id="wordlist-table-body" class="bg-white divide-y divide-gray-200">
+                        <!-- JS로 단어장 데이터 삽입 -->
+                        <tr>
+                            <td colspan="2" class="p-4 text-center text-gray-500">
+                                단어장을 불러오는 중입니다...
+                            </td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+
+        </div>
+    </div>
+
+    <script>
+        const wordlistTableBody = document.getElementById('wordlist-table-body');
+        const toggleWordBtn = document.getElementById('toggle-word-btn');
+        const toggleMeaningBtn = document.getElementById('toggle-meaning-btn');
+        
+        let vocabList = []; // { word: '단어', meaning: '뜻' }
+        let isWordHidden = false;
+        let isMeaningHidden = false;
+
+        /**
+         * [추가됨] 배열을 랜덤하게 섞는 함수 (Fisher-Yates shuffle)
+         */
+        function shuffleArray(array) {
+            for (let i = array.length - 1; i > 0; i--) {
+                const j = Math.floor(Math.random() * (i + 1));
+                [array[i], array[j]] = [array[j], array[i]];
+            }
+            return array;
+        }
+
+        /**
+         * vocabulary.txt 파일 불러오기
+         */
+        async function loadVocabulary() {
+            try {
+                // 캐시 사용 안 함 (항상 새로고침)
+                const response = await fetch('vocabulary.txt', { cache: 'no-store' });
+                if (!response.ok) {
+                    throw new Error('vocabulary.txt 파일을 불러올 수 없습니다.');
+                }
+                const text = await response.text();
+                
+                vocabList = text.split('\n')
+                    .map(line => line.trim())
+                    .filter(line => line.length > 0 && !line.startsWith('# ')) // # 주석 제외
+                    .map(line => {
+                        // 구분자를 ' - '로 사용
+                        const parts = line.split(' - '); 
+                        if (parts.length >= 2) {
+                            const word = parts[0].trim();
+                            const meaning = parts.slice(1).join(' - ').trim(); 
+                            return { word, meaning };
+                        }
+                        return null;
+                    })
+                    .filter(item => item !== null); // 형식이 맞지 않는 줄 제외
+                
+                // [수정됨] 단어장 순서 랜덤으로 섞기
+                vocabList = shuffleArray(vocabList);
+
+                // 단어장 불러오기 성공 시 테이블 표시
+                displayWordList();
+
+            } catch (error) {
+                console.error(error);
+                wordlistTableBody.innerHTML = `<tr><td colspan="2" class="p-4 text-center text-red-500">${error.message}</td></tr>`;
+            }
+        }
+
+        /**
+         * 단어장 테이블 표시 (DOM 생성 방식)
+         */
+        function displayWordList() {
+            wordlistTableBody.innerHTML = ''; // 기존 '로딩 중...' 메시지 초기화
+            
+            if (vocabList.length === 0) {
+                wordlistTableBody.innerHTML = `<tr><td colspan="2" class="p-4 text-center text-gray-500">단어장이 비어있습니다.</td></tr>`;
+                return;
+            }
+
+            vocabList.forEach(item => {
+                const { word, meaning } = item;
+                
+                const row = document.createElement('tr');
+                row.className = 'hover:bg-gray-50';
+
+                // --- 1. 단어 Cell (Word Cell) ---
+                const wordCell = document.createElement('td');
+                wordCell.className = 'p-3 text-gray-900 word-cell'; 
+
+                // [수정됨] 하이라이트 기능 추가
+                wordCell.style.cursor = 'pointer'; // 클릭 가능 표시
+                wordCell.onclick = () => {
+                    // Tailwind의 연한 노란색 클래스(bg-yellow-100)를 토글
+                    row.classList.toggle('bg-yellow-100');
+                };
+
+                const wordContainer = document.createElement('div');
+                wordContainer.className = 'flex items-center justify-between';
+
+                // 단어 텍스트 (span으로 감싸서 가리기 기능 적용)
+                const wordSpan = document.createElement('span');
+                wordSpan.className = 'word-span text-base';
+                wordSpan.textContent = word;
+                if (isWordHidden) {
+                    wordSpan.classList.add('text-transparent', 'select-none');
+                }
+
+                // [수정됨] TTS 버튼 -> 네이버 사전 링크 버튼
+                const linkButton = document.createElement('button'); // 버튼 태그 사용
+                linkButton.className = 'flex-shrink-0 w-6 h-6 rounded-full flex items-center justify-center text-gray-400 hover:bg-gray-200 hover:text-gray-700 transition-colors ml-2';
+                // 새 창(external link) 아이콘
+                linkButton.innerHTML = `<svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14"></path></svg>`;
+                
+                linkButton.onclick = (e) => {
+                    e.stopPropagation(); // [중요] 행 하이라이트가 같이 실행되는 것을 방지
+                    openNaverDictionary(word); // 네이버 사전 열기
+                };
+                
+                // 단어 셀 조립
+                wordContainer.appendChild(wordSpan);
+                wordContainer.appendChild(linkButton); // 수정된 버튼 추가
+                wordCell.appendChild(wordContainer);
+
+                // --- 2. 뜻 Cell (Meaning Cell) ---
+                const meaningCell = document.createElement('td');
+                meaningCell.className = 'p-3 text-gray-700 meaning-cell';
+
+                // 뜻 텍스트 (span으로 감싸서 가리기 기능 적용)
+                const meaningSpan = document.createElement('span');
+                meaningSpan.className = 'meaning-span text-sm';
+                meaningSpan.textContent = meaning;
+                if (isMeaningHidden) {
+                    meaningSpan.classList.add('text-transparent', 'select-none');
+                }
+                
+                meaningCell.appendChild(meaningSpan);
+
+                // --- 3. 행 조립 ---
+                row.appendChild(wordCell);
+                row.appendChild(meaningCell);
+                wordlistTableBody.appendChild(row);
+            });
+        }
+        
+        // 페이지 로드 시 단어장 불러오기
+        loadVocabulary();
+
+        /**
+         * [수정됨] openNaverDictionary 함수 로직 변경
+         */
+        function openNaverDictionary(word) {
+            let searchTerm = word;
+            const hasKanjiRegex = /[\u4E00-\u9FAF]/; // 일본어 한자 정규식
+            
+            // 1. 괄호가 있는지 확인 (전각/반각 괄호 모두)
+            //    [1]: 괄호 앞 (base), [2]: 괄호 안 (inside), [3]: 괄호 뒤 (ending)
+            const partsMatch = word.match(/^(.*?)[\(|（]([^)\）]+)[\)|）](.*?)$/);
+
+            if (partsMatch) {
+                const base = partsMatch[1].trim();
+                const inside = partsMatch[2].trim();
+                const ending = partsMatch[3].trim();
+
+                // 2. 괄호 안(inside)에 한자가 있는지 확인 (예: やさ(優)しい)
+                if (hasKanjiRegex.test(inside)) {
+                    // 괄호 안에 한자가 있으면 (Case 3: yomi(kanji)yomi)
+                    // 괄호 안의 한자 + 괄호 뒤의 오쿠리가나를 합쳐서 검색
+                    searchTerm = inside + ending;
+                } else {
+                    // 3. 괄호 안에 한자가 없으면 (Case 2: kanji(yomi) or Case 4: yomi(yomi))
+                    // 괄호 앞(base)을 검색어로 사용
+                    searchTerm = base;
+                }
+            } else {
+                // 4. 괄호가 없는 단어는 그대로 사용
+                searchTerm = word.trim();
+            }
+
+            // 5. 최종 검색어 정리
+            searchTerm = searchTerm.trim();
+            if (!searchTerm) {
+                searchTerm = word.trim(); // 로직이 실패한 경우 원본 단어로 검색
+            }
+            
+            if (!searchTerm) return; // 검색어가 없으면 중지
+
+            // 네이버 일본어 사전 검색 URL
+            const url = `https://ja.dict.naver.com/#/search?query=${encodeURIComponent(searchTerm)}`;
+            window.open(url, '_blank'); // 새 탭에서 열기
+        }
+
+        // 단어 가리기 토글 (span 대상)
+        toggleWordBtn.addEventListener('click', () => {
+            isWordHidden = !isWordHidden;
+            const spans = document.querySelectorAll('.word-span');
+            spans.forEach(span => {
+                span.classList.toggle('text-transparent', isWordHidden);
+                span.classList.toggle('select-none', isWordHidden);
+            });
+            toggleWordBtn.textContent = isWordHidden ? '단어 보이기' : '단어 가리기';
+        });
+
+        // 뜻 가리기 토글 (span 대상)
+        toggleMeaningBtn.addEventListener('click', () => {
+            isMeaningHidden = !isMeaningHidden;
+            const spans = document.querySelectorAll('.meaning-span');
+            spans.forEach(span => {
+                span.classList.toggle('text-transparent', isMeaningHidden);
+                span.classList.toggle('select-none', isMeaningHidden);
+            });
+            toggleMeaningBtn.textContent = isMeaningHidden ? '뜻 보이기' : '뜻 가리기';
+        });
+    </script>
+</body>
+</html>
+
