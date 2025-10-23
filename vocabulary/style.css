@@ -28,6 +28,7 @@ h1 {
     margin-top: 0;
 }
 
+/* ▼▼▼ 이 부분이 수정되었습니다 ▼▼▼ */
 .word-card {
     background-color: #f9f9f9;
     border: 1px solid #ddd;
@@ -37,9 +38,17 @@ h1 {
     font-size: 2.2rem;
     font-weight: 700;
     color: #0056b3;
-    min-height: 80px;
-    word-break: keep-all; /* 단어 단위로 줄바꿈 (필요시) */
+    min-height: 80px; /* 박스의 최소 높이 */
+    word-break: keep-all; 
+
+    /* ▼▼▼ 추가된 부분 (Flexbox로 중앙 정렬) ▼▼▼ */
+    display: flex;
+    justify-content: center; /* 가로 정중앙 */
+    align-items: center;    /* 세로 정중앙 */
+    /* ▲▲▲ 추가된 부분 ▲▲▲ */
 }
+/* ▲▲▲ 수정 완료 ▲▲▲ */
+
 
 #options-container {
     display: flex;
@@ -60,6 +69,7 @@ h1 {
     width: 100%;
 }
 
+/* ... (이하 나머지 CSS 코드는 모두 동일합니다) ... */
 #options-container button:not(:disabled):hover {
     background-color: #f5f5f5;
     border-color: #aaa;
@@ -191,7 +201,6 @@ h1 {
     flex: 1;
     text-align: left;
     font-weight: 500;
-    /* 긴 단어가 화면을 뚫는 것을 방지 */
     word-break: break-all; 
 }
 .col-correct {
@@ -208,44 +217,33 @@ h1 {
     font-weight: 700;
 }
 
-/* ▼▼▼ 추가된 부분 (모바일 반응형) ▼▼▼ 
-  화면 너비가 480px 이하일 때 적용됩니다.
-*/
+/* --- (모바일 반응형) --- */
 @media (max-width: 480px) {
     body {
-        padding: 10px; /* body 여백 축소 */
+        padding: 10px; 
     }
-
     .quiz-container {
-        padding: 20px; /* 퀴즈 컨테이너 내부 여백 축소 */
+        padding: 20px; 
     }
-
     h1 {
-        font-size: 1.8rem; /* 제목 글자 크기 축소 */
+        font-size: 1.8rem; 
     }
-
     .word-card {
-        font-size: 1.8rem; /* (가장 중요) 단어 글자 크기 대폭 축소 */
-        padding: 30px 15px; /* 단어 카드 여백 축소 */
+        font-size: 1.8rem; 
+        padding: 30px 15px; 
     }
-
     #options-container button {
-        font-size: 0.9rem; /* 버튼 글자 크기 축소 */
-        padding: 12px; /* 버튼 여백 축소 */
+        font-size: 0.9rem; 
+        padding: 12px; 
     }
-
     #feedback {
-        font-size: 1.1rem; /* 피드백 글자 크기 축소 */
+        font-size: 1.1rem; 
     }
-
-    /* 모달 팝업창도 좌우 여백을 조금 더 확보 */
     #results-container.modal {
         width: 95%; 
         padding: 20px;
     }
-
     .stats-table {
-        font-size: 0.9rem; /* 통계 테이블 글자 크기 축소 */
+        font-size: 0.9rem; 
     }
 }
-/* ▲▲▲ 추가된 부분 (모바일 반응형) ▲▲▲ */
