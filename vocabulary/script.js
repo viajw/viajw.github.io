@@ -1,5 +1,5 @@
 document.addEventListener('DOMContentLoaded', () => {
-    // 1. HTML 요소 가져오기
+    // 1. HTML 요소 가져오기 (변경 없음)
     const wordDisplay = document.getElementById('word-display');
     const optionsContainer = document.getElementById('options-container');
     const feedbackElement = document.getElementById('feedback');
@@ -7,24 +7,25 @@ document.addEventListener('DOMContentLoaded', () => {
     const resultsContainer = document.getElementById('results-container');
     const scoreDisplay = document.getElementById('score-display');
     const missedWordsList = document.getElementById('missed-words-list');
-
-    // ▼▼▼ 추가된 부분 ▼▼▼
-    // 모달 관련 요소 추가
     const modalOverlay = document.getElementById('modal-overlay');
     const closeModalButton = document.getElementById('close-modal-button');
-    // ▲▲▲ 추가된 부분 ▲▲▲
 
     let vocabulary = [];
     let currentCorrectAnswer = null;
     let isChecking = false;
 
+    // ▼▼▼ 변경된 부분 ▼▼▼
+    // 1, 2. 통계 객체 구조 변경
+    // 기존 Set() 대신 Map()을 사용하여 단어별 상세 기록
     const stats = {
-        correct: 0,
-        incorrect: 0,
-        missedWords: new Set()
+        correct: 0, // 전체 정답 수
+        incorrect: 0, // 전체 오답 수
+        // Key: 단어(string), Value: { correct: 0, incorrect: 0 }
+        wordDetail: new Map() 
     };
+    // ▲▲▲ 변경된 부분 ▲▲▲
 
-    // 4. vocabulary.txt 파일 불러오기
+    // 4. vocabulary.txt 파일 불러오기 (변경 없음)
     async function fetchVocabulary() {
         try {
             const response = await fetch('vocabulary.txt');
@@ -56,7 +57,7 @@ document.addEventListener('DOMContentLoaded', () => {
         }
     }
 
-    // 9. 새 퀴즈 문제 불러오기
+    // 9. 새 퀴즈 문제 불러오기 (변경 없음)
     function loadNewQuiz() {
         isChecking = false;
         feedbackElement.textContent = '';
@@ -87,7 +88,8 @@ document.addEventListener('DOMContentLoaded', () => {
         });
     }
 
-    // 7, 8. 정답 확인
+    // ▼▼▼ 변경된 부분 ▼▼▼
+    // 7, 8. 정답 확인 (단어별 통계 기록 로직 추가)
     function checkAnswer(selectedMeaning, clickedButton) {
         if (isChecking) return;
         isChecking = true;
@@ -95,14 +97,29 @@ document.addEventListener('DOMContentLoaded', () => {
         const allButtons = optionsContainer.querySelectorAll('button');
         allButtons.forEach(btn => btn.disabled = true);
 
+        // --- (새 통계 로직) ---
+        const currentWord = wordDisplay.textContent;
+        
+        // 1. 단어가 통계 맵에 없으면 초기화
+        if (!stats.wordDetail.has(currentWord)) {
+            stats.wordDetail.set(currentWord, { correct: 0, incorrect: 0 });
+        }
+        // 2. 현재 단어의 통계 객체 가져오기
+        const wordStat = stats.wordDetail.get(currentWord);
+        // --- (새 통계 로직 끝) ---
+
         if (selectedMeaning === currentCorrectAnswer) {
-            stats.correct++;
+            // 7. 정답
+            stats.correct++; // 전체 통계
+            wordStat.correct++; // 단어별 통계
             clickedButton.classList.add('correct');
             feedbackElement.textContent = '정답!';
             feedbackElement.className = 'correct';
         } else {
-            stats.incorrect++;
-            stats.missedWords.add(wordDisplay.textContent);
+            // 8. 오답
+            stats.incorrect++; // 전체 통계
+            wordStat.incorrect++; // 단어별 통계
+            // (기존의 stats.missedWords.add() 로직은 wordStat로 대체됨)
             clickedButton.classList.add('incorrect');
             feedbackElement.textContent = '오답!';
             feedbackElement.className = 'incorrect';
@@ -117,49 +134,64 @@ document.addEventListener('DOMContentLoaded', () => {
         setTimeout(loadNewQuiz, 1500);
     }
 
-
-    // ▼▼▼ 변경된 부분 ▼▼▼
-    
-    // 모달을 여는 함수
+    // 10, 11. 결과 확인 (모달 열기 함수)
     function openModal() {
-        // 11-a. 정답/오답 횟수 표시
+        // 11-a. 전체 정답/오답 횟수 표시
         scoreDisplay.textContent = `총 정답: ${stats.correct}회 / 총 오답: ${stats.incorrect}회`;
 
-        // 11-b. 오답 횟수 1 이상인 단어 표시
-        missedWordsList.innerHTML = '<h4>틀린 단어 목록:</h4>';
-        if (stats.missedWords.size === 0) {
-            missedWordsList.innerHTML += '<p>틀린 단어가 없습니다.</p>';
+        // 11-b, 2, 3. 단어별 상세 통계 테이블 생성
+        
+        // 테이블 내용 비우기
+        missedWordsList.innerHTML = ''; 
+
+        // 3. 테이블 헤더 생성
+        let tableHTML = `
+            <div class="stats-table">
+                <div class="stats-header">
+                    <span class="col-word">단어</span>
+                    <span class="col-correct">정답</span>
+                    <span class="col-incorrect">오답</span>
+                </div>
+                <div class="stats-body">
+        `;
+
+        if (stats.wordDetail.size === 0) {
+            tableHTML += '<p style="text-align: center; padding: 20px 0;">아직 퀴즈 기록이 없습니다.</p>';
         } else {
-            stats.missedWords.forEach(word => {
-                const wordElement = document.createElement('span');
-                wordElement.textContent = word;
-                wordElement.className = 'missed-word';
-                missedWordsList.appendChild(wordElement);
+            // 2. Map을 순회하며 각 단어의 통계 행(row) 생성
+            stats.wordDetail.forEach((counts, word) => {
+                // 3. 오답이 1 이상인 경우 'is-missed' 클래스 적용
+                const incorrectClass = counts.incorrect > 0 ? 'is-missed' : '';
+                
+                tableHTML += `
+                    <div class="stats-row">
+                        <span class="col-word ${incorrectClass}">${word}</span>
+                        <span class="col-correct">${counts.correct}</span>
+                        <span class="col-incorrect ${incorrectClass}">${counts.incorrect}</span>
+                    </div>
+                `;
             });
         }
+
+        tableHTML += `</div></div>`; // stats-body, stats-table 닫기
+        missedWordsList.innerHTML = tableHTML;
 
         // 모달과 배경을 보이게 함
         resultsContainer.classList.remove('hidden');
         modalOverlay.classList.remove('hidden');
     }
 
-    // 모달을 닫는 함수
+    // 모달을 닫는 함수 (변경 없음)
     function closeModal() {
         resultsContainer.classList.add('hidden');
         modalOverlay.classList.add('hidden');
     }
 
-    // 10. 결과 확인 버튼 이벤트 (토글 대신 '열기' 기능만 하도록 수정)
+    // 이벤트 리스너 (변경 없음)
     resultsButton.addEventListener('click', openModal);
-
-    // 모달 닫기 버튼 이벤트
     closeModalButton.addEventListener('click', closeModal);
-
-    // 모달 배경 클릭 시 닫기 이벤트
     modalOverlay.addEventListener('click', closeModal);
-
     // ▲▲▲ 변경된 부분 ▲▲▲
-
 
     // 퀴즈 시작
     fetchVocabulary();
