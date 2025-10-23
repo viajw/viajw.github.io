@@ -115,7 +115,7 @@
                 <!-- 12.b. 전체 통계 -->
                 <div class="text-center mb-4">
                     <span class="text-lg font-semibold text-gray-700">전체 통계:</span>
-                    <span id="total-stats" class="text-lg font-bold text-blue-600 ml-2">정답 0 / 오답 0</span>
+                    <span id="total-stats" class="text-lg font-bold ml-2">정답 0 / 오답 0</span>
                 </div>
                 
                 <!-- 12.c, e. 개별 통계 테이블 -->
@@ -373,7 +373,12 @@
              */
             function showResults() {
                 // 12.b. 전체 통계
-                totalStats.textContent = `정답 ${totalCorrect} / 오답 ${totalIncorrect}`;
+                // totalStats.textContent = `정답 ${totalCorrect} / 오답 ${totalIncorrect}`;
+                // 요청 사항: 정답/오답 숫자 색상 변경
+                totalStats.innerHTML = `
+                    정답 <span class="text-green-500 font-bold">${totalCorrect}</span> / 
+                    오답 <span class="text-red-500 font-bold">${totalIncorrect}</span>
+                `;
 
                 // 모드에 따라 테이블 헤더 변경
                 if (currentMode === 'word-to-meaning') {
@@ -393,8 +398,10 @@
                     // 요청 사항 (1, 2): 정답 또는 오답 횟수가 1 이상인 (즉, 출제된) 문제만 표시
                     if (s && (s.correct > 0 || s.incorrect > 0)) {
                         
-                        // 12.d. 틀린 횟수가 1 이상이면 빨간색
-                        const itemClass = s.incorrect > 0 ? 'text-red-600 font-semibold' : 'text-gray-900';
+                        // 12.d. 요청 사항: 틀린 단어 줄 배경색 변경
+                        // const itemClass = s.incorrect > 0 ? 'text-red-600 font-semibold' : 'text-gray-900'; // (이전 방식)
+                        const rowClass = s.incorrect > 0 ? 'bg-red-50 hover:bg-red-100' : 'hover:bg-gray-50'; // 틀린 줄 배경색
+                        const itemClass = 'text-gray-900'; // 모든 텍스트는 검정색
                         
                         // 요청 사항: 모드에 따라 결과 포맷 변경
                         let itemText = '';
@@ -407,7 +414,7 @@
                         }
 
                         const row = `
-                            <tr class="hover:bg-gray-50">
+                            <tr class="${rowClass}">
                                 <td class="p-3 text-sm ${itemClass}">${itemText}</td>
                                 <td class="p-3 text-sm text-gray-700 text-center">${s.correct}</td>
                                 <td class="p-3 text-sm text-gray-700 text-center">${s.incorrect}</td>
@@ -462,4 +469,5 @@
 
 </body>
 </html>
+
 
