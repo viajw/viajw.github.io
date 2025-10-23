@@ -135,12 +135,13 @@
             vocabList.forEach(item => {
                 const { word, meaning } = item;
                 
-                // [신규] 현재 숨김 상태를 반영하여 클래스 설정
-                const wordClasses = ['p-3', 'text-sm', 'text-gray-900', 'word-cell'];
+                // [수정됨] 단어 글씨 크기 'text-base'로 변경
+                const wordClasses = ['p-3', 'text-base', 'text-gray-900', 'word-cell'];
                 if (isWordHidden) {
                     wordClasses.push('text-transparent', 'select-none');
                 }
                 
+                // 뜻 글씨 크기는 'text-sm'으로 유지
                 const meaningClasses = ['p-3', 'text-sm', 'text-gray-700', 'meaning-cell'];
                 if (isMeaningHidden) {
                     meaningClasses.push('text-transparent', 'select-none');
