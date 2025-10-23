@@ -32,12 +32,12 @@
     <div class="container mx-auto max-w-2xl w-full">
         <div class="bg-white rounded-2xl shadow-xl p-6 sm:p-8">
             
-            <!-- 제목 [수정됨] - 버튼 추가 -->
+            <!-- 제목 -->
             <div class="flex flex-wrap justify-between items-center gap-4 mb-6 border-b border-gray-200 pb-5">
                 <h1 id="main-title" class="text-2xl sm:text-3xl font-bold text-gray-800">
                     전체 단어장
                 </h1>
-                <!-- [신규] 토글 버튼 영역 -->
+                <!-- 토글 버튼 영역 -->
                 <div class="flex gap-2">
                     <button id="toggle-word-btn" class="text-xs sm:text-sm bg-gray-200 hover:bg-gray-300 text-gray-700 font-semibold py-2 px-3 rounded-lg transition-colors duration-200">
                         단어 가리기
@@ -84,7 +84,7 @@
         let isWordHidden = false;
         let isMeaningHidden = false;
 
-        // [신규] 브라우저 음성 목록 로드
+        // 브라우저 음성 목록 로드
         if (speechSynthesis.onvoiceschanged !== undefined) {
             speechSynthesis.onvoiceschanged = () => window.speechSynthesis.getVoices();
         }
@@ -126,7 +126,7 @@
         }
 
         /**
-         * [신규] 단어장 테이블 표시 (DOM 생성 방식으로 변경)
+         * 단어장 테이블 표시 (DOM 생성 방식)
          */
         function displayWordList() {
             wordlistTableBody.innerHTML = ''; // 기존 '로딩 중...' 메시지 초기화
@@ -136,7 +136,6 @@
                 return;
             }
 
-            // vocabList 순서대로 순회하며 테이블 채우기
             vocabList.forEach(item => {
                 const { word, meaning } = item;
                 
@@ -145,32 +144,28 @@
 
                 // --- 1. 단어 Cell (Word Cell) ---
                 const wordCell = document.createElement('td');
-                // [수정됨] 클래스에서 'text-base' 등 제거 (컨테이너가 관리)
                 wordCell.className = 'p-3 text-gray-900 word-cell'; 
 
-                // [신규] 단어 + 버튼을 담을 Flex 컨테이너
                 const wordContainer = document.createElement('div');
                 wordContainer.className = 'flex items-center justify-between';
 
                 // 단어 텍스트 (span으로 감싸서 가리기 기능 적용)
                 const wordSpan = document.createElement('span');
-                wordSpan.className = 'word-span text-base'; // [수정됨] 폰트 크기 여기서 지정
+                wordSpan.className = 'word-span text-base';
                 wordSpan.textContent = word;
                 if (isWordHidden) {
                     wordSpan.classList.add('text-transparent', 'select-none');
                 }
 
-                // [신규] TTS 버튼
+                // TTS 버튼
                 const ttsButton = document.createElement('button');
                 ttsButton.className = 'flex-shrink-0 w-6 h-6 rounded-full flex items-center justify-center text-gray-400 hover:bg-gray-200 hover:text-gray-700 transition-colors ml-2';
-                // 스피커 아이콘 SVG
                 ttsButton.innerHTML = `<svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15.536 8.464a5 5 0 010 7.072m2.828-9.9a9 9 0 010 12.728M5.586 15H4a1 1 0 01-1-1v-4a1 1 0 011-1h1.586l4.707-4.707a1 1 0 011.707.707v14.586a1 1 0 01-1.707.707L5.586 15z"></path></svg>`;
                 
-                // [신규] TTS 이벤트 바인딩
-                const lang = detectLang(word);
+                // [수정됨] 언어 감지 제거, 일본어 전용 TTS 이벤트 바인딩
                 ttsButton.onclick = (e) => {
-                    e.stopPropagation(); // 행 클릭 이벤트 방지
-                    speakWord(word, lang);
+                    e.stopPropagation(); 
+                    speakJapanese(word); // 일본어 전용 함수 호출
                 };
                 
                 // 단어 셀 조립
@@ -184,13 +179,12 @@
 
                 // 뜻 텍스트 (span으로 감싸서 가리기 기능 적용)
                 const meaningSpan = document.createElement('span');
-                meaningSpan.className = 'meaning-span text-sm'; // [수정됨] 폰트 크기 여기서 지정
+                meaningSpan.className = 'meaning-span text-sm';
                 meaningSpan.textContent = meaning;
                 if (isMeaningHidden) {
                     meaningSpan.classList.add('text-transparent', 'select-none');
                 }
                 
-                // 뜻 셀 조립
                 meaningCell.appendChild(meaningSpan);
 
                 // --- 3. 행 조립 ---
@@ -204,31 +198,28 @@
         loadVocabulary();
 
         /**
-         * [신규] 언어 감지 함수
+         * [신규/수정됨] 일본어 TTS로 단어 읽기
          */
-        function detectLang(text) {
-            if (/[\uAC00-\uD7AF]/.test(text)) { // 한글
-                return 'ko-KR';
-            }
-            if (/[\u3040-\u309F\u30A0-\u30FF\u4E00-\u9FAF]/.test(text)) { // 일본어 (히라가나, 가타카나, CJK 한자)
-                return 'ja-JP';
-            }
-            // 그 외 (라틴 문자 등)는 영어로 기본 설정
-            return 'en-US';
-        }
-
-        /**
-         * [신규] TTS로 단어 읽기
-         */
-        function speakWord(word, lang) {
+        function speakJapanese(word) {
             // 진행 중인 음성 중지
             window.speechSynthesis.cancel();
             
-            const utterance = new SpeechSynthesisUtterance(word);
-            utterance.lang = lang;
-            utterance.rate = 0.9; // 약간 느린 배속으로 설정
+            let textToSpeak = word;
 
-            // 해당 언어의 사용 가능한 음성 찾기
+            // [신규] 괄호 안의 요미가나 추출 (반각/전각 괄호 모두 대응)
+            // 예: "漢字(かんじ)" -> "かんじ"
+            // 예: "単語（たんご）" -> "たんご"
+            const yomiganaMatch = word.match(/[\(|（]([^)\）]+)[\)|）]/);
+
+            if (yomiganaMatch && yomiganaMatch[1]) {
+                textToSpeak = yomiganaMatch[1];
+            }
+
+            const utterance = new SpeechSynthesisUtterance(textToSpeak);
+            const lang = 'ja-JP'; // [수정됨] 일본어로 고정
+            utterance.lang = lang;
+            utterance.rate = 0.9;
+
             const voices = window.speechSynthesis.getVoices();
             const specificVoice = voices.find(voice => voice.lang === lang);
             if (specificVoice) {
@@ -238,10 +229,10 @@
             window.speechSynthesis.speak(utterance);
         }
 
-        // [수정됨] 단어 가리기 토글 (span 대상)
+        // 단어 가리기 토글 (span 대상)
         toggleWordBtn.addEventListener('click', () => {
             isWordHidden = !isWordHidden;
-            const spans = document.querySelectorAll('.word-span'); // [수정] .word-cell -> .word-span
+            const spans = document.querySelectorAll('.word-span');
             spans.forEach(span => {
                 span.classList.toggle('text-transparent', isWordHidden);
                 span.classList.toggle('select-none', isWordHidden);
@@ -249,10 +240,11 @@
             toggleWordBtn.textContent = isWordHidden ? '단어 보이기' : '단어 가리기';
         });
 
-        // [수정됨] 뜻 가리기 토글 (span 대상)
+        // 뜻 가리기 토글 (span 대상)
         toggleMeaningBtn.addEventListener('click', () => {
             isMeaningHidden = !isMeaningHidden;
-            const spans = document.querySelectorAll('.meaning-span'); // [수정] .meaning-cell -> .meaning-span
+            const spans = document.querySelectorAll('.meaning-span');
+Main:
             spans.forEach(span => {
                 span.classList.toggle('text-transparent', isMeaningHidden);
                 span.classList.toggle('select-none', isMeaningHidden);
