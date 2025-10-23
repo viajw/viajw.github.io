@@ -31,9 +31,19 @@ document.addEventListener('DOMContentLoaded', () => {
             }
             const text = await response.text();
             
+            // ▼▼▼ 이 부분이 수정되었습니다 ▼▼▼
             vocabulary = text.trim().split('\n')
-                .filter(line => line.includes(','))
+                .filter(line => {
+                    const trimmedLine = line.trim();
+                    // 1. 빈 줄이 아니고,
+                    // 2. '#'으로 시작하는 주석 줄이 아니고,
+                    // 3. 쉼표(,)가 포함된 유효한 줄만 통과시킵니다.
+                    return trimmedLine.length > 0 && 
+                           !trimmedLine.startsWith('#') && 
+                           trimmedLine.includes(',');
+                })
                 .map(line => {
+                // ▲▲▲ 여기까지 수정되었습니다 ▲▲▲
                     const parts = line.split(',');
                     return {
                         word: parts[0].trim(),
@@ -41,10 +51,12 @@ document.addEventListener('DOMContentLoaded', () => {
                     };
                 });
 
+            // ▼▼▼ 경고 메시지도 수정되었습니다 ▼▼▼
             if (vocabulary.length < 5) {
-                alert('단어장에 최소 5개의 단어가 필요합니다. (vocabulary.txt 확인)');
+                alert('단어장에 최소 5개의 단어가 필요합니다. (주석 처리된 줄 제외 5개 이상)');
                 return;
             }
+            // ▲▲▲ 수정 완료 ▲▲▲
             
             loadNewQuiz();
 
@@ -54,7 +66,6 @@ document.addEventListener('DOMContentLoaded', () => {
         }
     }
 
-    // ▼▼▼ 변경된 부분 ▼▼▼
     // 9. 새 퀴즈 문제 불러오기 (질문: 뜻, 정답: 단어)
     function loadNewQuiz() {
         isChecking = false;
@@ -141,7 +152,6 @@ document.addEventListener('DOMContentLoaded', () => {
 
         setTimeout(loadNewQuiz, 1500);
     }
-    // ▲▲▲ 변경된 부분 ▲▲▲
 
     // 10, 11. 결과 확인 (모달 열기 함수)
     function openModal() {
