@@ -233,6 +233,11 @@
             function nextQuestion() {
                 if (vocabList.length === 0) return;
 
+                // 요청 사항: 이전 버튼의 포커스(음영) 제거
+                if (document.activeElement && typeof document.activeElement.blur === 'function') {
+                    document.activeElement.blur();
+                }
+
                 isAnswered = false;
                 feedbackText.textContent = '';
                 optionsContainer.innerHTML = ''; // 버튼 비우기
@@ -469,5 +474,6 @@
 
 </body>
 </html>
+
 
 
