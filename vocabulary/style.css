@@ -19,11 +19,8 @@ body {
     width: 100%;
     max-width: 500px;
     text-align: center;
-    /* ▼▼▼ 추가된 부분 ▼▼▼ */
-    /* 모달이 떴을 때 퀴즈 컨테이너가 뒤로 가도록 설정 */
     position: relative; 
     z-index: 1;
-    /* ▲▲▲ 추가된 부분 ▲▲▲ */
 }
 
 /* ... (h1, .word-card, #options-container 등 기존 스타일은 동일) ... */
@@ -106,43 +103,37 @@ h1 {
     background-color: #0056b3;
 }
 
+/* ▼▼▼ 이 아랫부분이 수정/교체되었습니다 ▼▼▼ */
 
-/* ▼▼▼ 변경/추가된 부분 ▼▼▼
-  기존 results-container 스타일을 모달 팝업창 스타일로 변경합니다.
-*/
-
-/* 공통 hidden 클래스 (JavaScript로 제어) */
+/* 공통 hidden 클래스 */
 .hidden {
     display: none;
 }
 
-/* 모달 배경 (반투명 검은 화면) */
+/* 모달 배경 (Overlay) */
 #modal-overlay {
-    position: fixed; /* 화면 전체에 고정 */
+    position: fixed;
     top: 0;
     left: 0;
     width: 100%;
     height: 100%;
-    background-color: rgba(0, 0, 0, 0.6); /* 반투명 검은색 */
-    z-index: 100; /* 퀴즈 컨테이너보다 위에 표시 */
+    background-color: rgba(0, 0, 0, 0.6);
+    z-index: 100;
 }
 
 /* 모달 팝업창 스타일 */
 #results-container.modal {
-    position: fixed; /* 화면 중앙에 고정 */
+    position: fixed;
     top: 50%;
     left: 50%;
-    transform: translate(-50%, -50%); /* 정확한 중앙 정렬 */
-    
+    transform: translate(-50%, -50%);
     background-color: #ffffff;
     border-radius: 10px;
     box-shadow: 0 5px 15px rgba(0, 0, 0, 0.3);
     padding: 30px;
     width: 90%;
     max-width: 450px;
-    z-index: 101; /* 배경(overlay)보다 위에 표시 */
-    
-    /* 기존 스타일 재정의 */
+    z-index: 101;
     margin-top: 0; 
     padding-top: 20px;
     border-top: none;
@@ -167,21 +158,65 @@ h1 {
     color: #333;
 }
 
-/* ... (기존 score-display, missed-words-list 스타일은 동일) ... */
+/* 전체 점수 표시 */
 #score-display {
     font-size: 1.1rem;
     font-weight: 700;
+    padding-bottom: 15px;
+    border-bottom: 1px solid #eee;
+    margin-bottom: 15px;
 }
-#missed-words-list h4 {
-    margin-bottom: 10px;
+
+/* 2, 3. 단어별 통계 테이블 스타일 */
+.stats-table {
+    width: 100%;
+    font-size: 0.95rem;
 }
-#missed-words-list span.missed-word {
+
+/* 테이블 헤더 (고정) */
+.stats-header {
+    display: flex;
+    font-weight: 700;
+    background-color: #f8f9fa;
+    padding: 10px 8px;
+    border-bottom: 2px solid #dee2e6;
+}
+
+/* 테이블 바디 (스크롤 가능) */
+.stats-body {
+    max-height: 250px; /* 목록이 길어지면 스크롤 */
+    overflow-y: auto;
+}
+
+/* 테이블 각 행 */
+.stats-row {
+    display: flex;
+    padding: 10px 8px;
+    border-bottom: 1px solid #f1f1f1;
+}
+.stats-row:last-child {
+    border-bottom: none;
+}
+
+/* 3. 컬럼 정렬 */
+.col-word {
+    flex: 1; /* 단어가 남은 공간 모두 차지 */
+    text-align: left;
+    font-weight: 500;
+}
+.col-correct {
+    width: 50px; /* 고정 폭 */
+    text-align: center;
+    color: #28a745;
+}
+.col-incorrect {
+    width: 50px; /* 고정 폭 */
+    text-align: center;
+}
+
+/* 2-b. 틀린 단어(오답 1 이상) 빨간색 표시 */
+.is-missed {
     color: #dc3545;
     font-weight: 700;
-    background-color: #fff0f1;
-    padding: 2px 5px;
-    border-radius: 4px;
-    margin-right: 8px;
-    line-height: 2;
 }
-/* ▲▲▲ 변경/추가된 부분 ▲▲▲ */
+/* ▲▲▲ 수정/교체 완료 ▲▲▲ */
