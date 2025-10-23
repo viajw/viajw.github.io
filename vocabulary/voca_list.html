@@ -1,0 +1,137 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>전체 단어장</title>
+    <!-- 1. Tailwind CSS 로드 -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    
+    <!-- 2. Pretendard (한글/영어), Noto Sans JP (일본어) 웹 폰트 로드 -->
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/static/pretendard.min.css" />
+    <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+JP:wght@400;500;700&display=swap" rel="stylesheet">
+    
+    <!-- Tailwind CSS 설정 스크립트 (폰트 적용) -->
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    // 2. 폰트 적용 (Tailwind 기본 폰트 재정의)
+                    fontFamily: {
+                        // 'sans'를 Pretendard와 Noto Sans JP로 재정의합니다.
+                        sans: ['Pretendard', 'Noto Sans JP', '-apple-system', 'BlinkMacSystemFont', 'Segoe UI', 'Roboto', 'Helvetica Neue', 'Arial', 'sans-serif'],
+                    },
+                },
+            },
+        }
+    </script>
+</head>
+<!-- body 태그에 font-sans 클래스를 적용하여 Tailwind config가 적용되도록 함 -->
+<body class="bg-gray-100 flex items-center justify-center min-h-screen font-sans p-4 sm:p-6">
+
+    <div class="container mx-auto max-w-2xl w-full">
+        <div class="bg-white rounded-2xl shadow-xl p-6 sm:p-8">
+            
+            <!-- 제목 -->
+            <div class="flex justify-between items-center mb-6 border-b border-gray-200 pb-5">
+                <h1 id="main-title" class="text-2xl sm:text-3xl font-bold text-gray-800">
+                    전체 단어장
+                </h1>
+            </div>
+
+            <!-- 단어장 테이블 -->
+            <div class="overflow-y-auto max-h-[70vh] border rounded-lg"> <!-- 높이 조절 -->
+                <table class="min-w-full divide-y divide-gray-200">
+                    <thead class="bg-gray-50 sticky top-0">
+                        <tr>
+                            <th scope="col" class="p-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                                단어
+                            </th>
+                            <th scope="col" class="p-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                                뜻
+                            </th>
+                        </tr>
+                    </thead>
+                    <tbody id="wordlist-table-body" class="bg-white divide-y divide-gray-200">
+                        <!-- JS로 단어장 데이터 삽입 -->
+                        <tr>
+                            <td colspan="2" class="p-4 text-center text-gray-500">
+                                단어장을 불러오는 중입니다...
+                            </td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+
+        </div>
+    </div>
+
+    <script>
+        const wordlistTableBody = document.getElementById('wordlist-table-body');
+        let vocabList = []; // { word: '단어', meaning: '뜻' }
+
+        /**
+         * vocabulary.txt 파일 불러오기
+         */
+        async function loadVocabulary() {
+            try {
+                // 캐시 사용 안 함 (항상 새로고침)
+                const response = await fetch('vocabulary.txt', { cache: 'no-store' });
+                if (!response.ok) {
+                    throw new Error('vocabulary.txt 파일을 불러올 수 없습니다.');
+                }
+                const text = await response.text();
+                
+                vocabList = text.split('\n')
+                    .map(line => line.trim())
+                    .filter(line => line.length > 0 && !line.startsWith('# ')) // # 주석 제외
+                    .map(line => {
+                        // 구분자를 ' - '로 사용
+                        const parts = line.split(' - '); 
+                        if (parts.length >= 2) {
+                            const word = parts[0].trim();
+                            const meaning = parts.slice(1).join(' - ').trim(); 
+                            return { word, meaning };
+                        }
+                        return null;
+                    })
+                    .filter(item => item !== null); // 형식이 맞지 않는 줄 제외
+                
+                // 단어장 불러오기 성공 시 테이블 표시
+                displayWordList();
+
+            } catch (error) {
+                console.error(error);
+                wordlistTableBody.innerHTML = `<tr><td colspan="2" class="p-4 text-center text-red-500">${error.message}</td></tr>`;
+            }
+        }
+
+        /**
+         * 단어장 모달 표시
+         */
+        function displayWordList() {
+            wordlistTableBody.innerHTML = ''; // 기존 '로딩 중...' 메시지 초기화
+            
+            if (vocabList.length === 0) {
+                wordlistTableBody.innerHTML = `<tr><td colspan="2" class="p-4 text-center text-gray-500">단어장이 비어있습니다.</td></tr>`;
+                return;
+            }
+
+            // vocabList 순서대로 순회하며 테이블 채우기
+            vocabList.forEach(item => {
+                const { word, meaning } = item;
+                const row = `
+                    <tr class="hover:bg-gray-50">
+                        <td class="p-3 text-sm text-gray-900">${word}</td>
+                        <td class="p-3 text-sm text-gray-700">${meaning}</td>
+                    </tr>
+                `;
+                wordlistTableBody.innerHTML += row;
+            });
+        }
+        
+        // 페이지 로드 시 단어장 불러오기
+        loadVocabulary();
+    </script>
+</body>
+</html>
