@@ -89,7 +89,8 @@
     </div>
 
     <!-- 12.a. 결과 확인 모달 -->
-    <div id="results-modal" class="modal fixed inset-0 bg-gray-600 bg-opacity-50 overflow-y-auto h-full w-full flex items-center justify-center p-4">
+    <!-- [수정됨] 기본 클래스에서 'flex' 제거. JS의 .open 클래스로 제어 -->
+    <div id="results-modal" class="modal fixed inset-0 bg-gray-600 bg-opacity-50 overflow-y-auto h-full w-full items-center justify-center p-4">
         <div class="bg-white w-full max-w-lg mx-auto rounded-2xl shadow-lg">
             <!-- 모달 헤더 -->
             <div class="flex justify-between items-center border-b border-gray-200 p-5">
@@ -319,7 +320,7 @@
         function checkAnswer(button, selectedAnswer, correctAnswer, questionKey) {
             if (isAnswered) return; // 중복 답변 방지
             isAnswered = true;
-            disableButtons(); // 모든 버튼 비활성화
+            disableButtons(); // 모든 버튼 비활성화 및 포커스 제거
 
             const statKey = questionKey; // (현재 문제의 단어 또는 뜻)
             
