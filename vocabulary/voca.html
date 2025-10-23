@@ -118,7 +118,7 @@
                     <table class="w-full min-w-full text-left">
                         <thead class="bg-gray-50 sticky top-0">
                             <tr>
-                                <th class="p-3 text-sm font-semibold text-gray-600">문제 (단어)</th>
+                                <th id="results-table-header" class="p-3 text-sm font-semibold text-gray-600">문제</th>
                                 <th class="p-3 text-sm font-semibold text-gray-600 text-center">정답</th>
                                 <th class="p-3 text-sm font-semibold text-gray-600 text-center">오답</th>
                             </tr>
@@ -145,6 +145,7 @@
             const closeModalBtn = document.getElementById('close-modal-btn');
             const totalStats = document.getElementById('total-stats');
             const statsTableBody = document.getElementById('stats-table-body');
+            const resultsTableHeader = document.getElementById('results-table-header'); // 결과 테이블 헤더
 
             // --- 상태 변수 ---
             let vocabList = []; // { word: '단어', meaning: '뜻' } 객체의 배열
@@ -336,6 +337,13 @@
             function showResults() {
                 // 12.b. 전체 통계
                 totalStats.textContent = `정답 ${totalCorrect} / 오답 ${totalIncorrect}`;
+
+                // 모드에 따라 테이블 헤더 변경
+                if (currentMode === 'word-to-meaning') {
+                    resultsTableHeader.textContent = '단어 (뜻)';
+                } else {
+                    resultsTableHeader.textContent = '뜻 (단어)';
+                }
                 
                 // 12.c. 개별 통계 테이블 생성
                 statsTableBody.innerHTML = ''; // 테이블 비우기
@@ -349,9 +357,17 @@
                     if (s.correct > 0 || s.incorrect > 0) {
                         
                         // 12.d. 틀린 횟수가 1 이상이면 빨간색
-                        // 요청 사항 (1, 2): "단어의뜻 (단어)" 포맷으로 변경
                         const itemClass = s.incorrect > 0 ? 'text-red-600 font-semibold' : 'text-gray-900';
-                        const itemText = `${meaning} (${word})`;
+                        
+                        // 요청 사항: 모드에 따라 결과 포맷 변경
+                        let itemText = '';
+                        if (currentMode === 'word-to-meaning') {
+                            // "단어 (뜻)"
+                            itemText = `${word} (${meaning})`;
+                        } else {
+                            // "뜻 (단어)"
+                            itemText = `${meaning} (${word})`;
+                        }
 
                         const row = `
                             <tr class="hover:bg-gray-50">
