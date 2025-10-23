@@ -10,5 +10,7 @@ Strawberry,딸기
 Peach,복숭아
 Book,책
 Computer,컴퓨터
+ASDVLKLKNDSLVNKALSDVKNALSVDNKLASD,ㅇㄴ리ㅘㄴ이ㅗ리농린오리ㅏ뇐
+
 
 
