@@ -23,45 +23,54 @@
             -webkit-tap-highlight-color: transparent;
         }
 
-        /* 정답/오답 버튼 스타일 */
+        /* 정답/오답 버튼 스타일 (Tailwind보다 우선 적용되도록 !important 추가) */
         .option-button.correct {
-            background-color: #28a745; /* 초록색 */
-            color: white;
-            border-color: #28a745;
+            background-color: #28a745 !important; /* 초록색 */
+            color: white !important;
+            border-color: #28a745 !important;
             transform: scale(1.02);
         }
 
         .option-button.incorrect {
-            background-color: #dc3545; /* 빨간색 */
-            color: white;
-            border-color: #dc3545;
+            background-color: #dc3545 !important; /* 빨간색 */
+            color: white !important;
+            border-color: #dc3545 !important;
         }
         
         /* 버튼 비활성화 시 스타일 */
         .option-button:disabled {
-            opacity: 0.7;
+            opacity: 0.8;
             cursor: not-allowed;
         }
 
-        /* 모달 페이드인/아웃 */
-        .modal {
-            transition: opacity 0.3s ease-in-out, visibility 0.3s ease-in-out;
-        }
+        /* 모달 스타일 */
         .modal.hidden {
+            display: none;
+        }
+        .modal {
+            display: flex;
+        }
+        /* 모달 열릴 때 애니메이션 */
+        .modal:not(.hidden) #modal-content {
+            opacity: 1;
+            transform: scale(1);
+        }
+        /* 모달 닫힐 때 (JavaScript에서 클래스 제어 필요) */
+        .modal.closing #modal-content {
             opacity: 0;
-            visibility: hidden;
+            transform: scale(0.95);
         }
     </style>
 </head>
 <body class="bg-gray-100 min-h-screen flex items-center justify-center p-4">
 
-    <div class="w-full max-w-2xl mx-auto">
-        <!-- 1. 제목 및 모드 변경 버튼 -->
-        <header class="flex justify-between items-center mb-6 px-2">
-            <h1 class="text-3xl font-bold text-gray-800">
+    <div class="container mx-auto max-w-xl w-full">
+        <!-- 1. 제목 및 모드 전환 버튼 -->
+        <header class="flex justify-between items-center mb-4 sm:mb-6">
+            <h1 class="text-2xl sm:text-3xl font-bold text-gray-800">
                 Vocabulary Test
             </h1>
-            <button id="toggle-mode-btn" class="text-sm sm:text-base bg-gray-200 hover:bg-gray-300 text-gray-700 font-semibold py-2 px-4 rounded-lg shadow transition-colors duration-200">
+            <button id="toggle-mode-btn" class="text-sm sm:text-base bg-gray-200 hover:bg-gray-300 text-gray-700 font-semibold py-2 px-3 sm:px-4 rounded-lg transition-all duration-200">
                 단어 ↔ 뜻
             </button>
         </header>
@@ -75,8 +84,8 @@
             </div>
 
             <!-- 3. 보기 버튼 영역 -->
-            <div id="options-container" class="grid grid-cols-1 gap-4">
-                <!-- JS로 5개의 버튼 생성 -->
+            <div id="options-container" class="grid grid-cols-1 gap-3 sm:gap-4">
+                <!-- 보기 버튼은 JavaScript로 생성됩니다. -->
             </div>
 
             <!-- 4. 정답/오답 피드백 -->
@@ -96,24 +105,20 @@
         <div class="bg-white w-full max-w-lg rounded-xl shadow-2xl overflow-hidden transform transition-all duration-300 scale-95 opacity-0" id="modal-content">
             <!-- 모달 헤더 -->
             <div class="flex justify-between items-center p-5 border-b border-gray-200">
-                <h3 class="text-2xl font-bold text-gray-800">결과</h3>
-                <button id="close-modal-btn" class="text-gray-400 hover:text-gray-600 transition-colors">
+                <h3 class="text-xl font-bold text-gray-900">결과 확인</h3>
+                <button id="close-modal-btn" class="text-gray-400 hover:text-gray-600 transition-all duration-200">
                     <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path></svg>
                 </button>
             </div>
-            
             <!-- 모달 바디 -->
             <div class="p-6">
-                <!-- 전체 통계 -->
-                <div class="mb-6 text-center">
-                    <h4 class="text-lg font-semibold text-gray-700 mb-2">전체 통계</h4>
-                    <p id="total-stats" class="text-xl font-bold">
-                        <!-- JS로 채워짐 (예: 정답 10 / 오답 5) -->
-                    </p>
+                <!-- 12.b. 전체 통계 -->
+                <div class="text-center mb-4">
+                    <span class="text-lg font-semibold text-gray-700">전체 통계:</span>
+                    <span id="total-stats" class="text-lg font-bold text-blue-600 ml-2">정답 0 / 오답 0</span>
                 </div>
-
-                <!-- 개별 통계 (테이블) -->
-                <h4 class="text-lg font-semibold text-gray-700 mb-3 text-center">상세 결과</h4>
+                
+                <!-- 12.c, e. 개별 통계 테이블 -->
                 <div class="max-h-64 overflow-y-auto border border-gray-200 rounded-lg">
                     <table class="w-full min-w-full text-left">
                         <thead class="bg-gray-50 sticky top-0">
@@ -123,8 +128,8 @@
                                 <th class="p-3 text-sm font-semibold text-gray-600 text-center">오답</th>
                             </tr>
                         </thead>
-                        <tbody id="stats-table-body" class="divide-y divide-gray-100">
-                            <!-- JS로 행 생성 -->
+                        <tbody id="stats-table-body" class="divide-y divide-gray-200">
+                            <!-- 통계 데이터는 JavaScript로 생성됩니다. -->
                         </tbody>
                     </table>
                 </div>
@@ -132,14 +137,17 @@
         </div>
     </div>
 
+
     <script>
         document.addEventListener('DOMContentLoaded', () => {
             // --- DOM 요소 ---
             const questionText = document.getElementById('question-text');
             const optionsContainer = document.getElementById('options-container');
             const feedbackText = document.getElementById('feedback-text');
-            const toggleModeBtn = document.getElementById('toggle-mode-btn');
             const showResultsBtn = document.getElementById('show-results-btn');
+            const toggleModeBtn = document.getElementById('toggle-mode-btn');
+            
+            // 모달 관련 요소
             const resultsModal = document.getElementById('results-modal');
             const modalContent = document.getElementById('modal-content');
             const closeModalBtn = document.getElementById('close-modal-btn');
@@ -152,112 +160,108 @@
             let stats = {}; // { '단어': { correct: 0, incorrect: 0 } }
             let totalCorrect = 0;
             let totalIncorrect = 0;
+            let currentQuestion = null; // 현재 문제 { word: '...', meaning: '...' }
+            let isAnswered = false; // 현재 문제에 답했는지 여부
             let currentMode = 'word-to-meaning'; // 'word-to-meaning' 또는 'meaning-to-word'
-            let currentQuestion = null; // 현재 문제의 { word, meaning } 객체
-            let isLoading = false; // 중복 클릭 및 로딩 중 클릭 방지
 
-            // --- 함수 ---
-
+            // --- 초기화 및 데이터 로드 ---
+            
             /**
-             * 단어장 파일(.txt)을 불러오고 파싱하여 초기화
+             * 4. vocabulary.txt 파일에서 단어 로드
+             * 14. 캐시 사용 안함 (fetch의 cache: 'no-store')
              */
             async function loadVocabulary() {
-                isLoading = true;
-                questionText.textContent = '단어장 로딩 중...';
-                optionsContainer.innerHTML = ''; // 버튼 비우기
-                feedbackText.textContent = '';
-                
                 try {
-                    // 14. 캐시를 사용하지 않고 항상 새로 불러오기
-                    const response = await fetch('vocabulary.txt', { cache: 'no-store' });
+                    // 14. 캐시 방지를 위해 'no-store' 사용 및 타임스탬프 추가
+                    const response = await fetch(`vocabulary.txt?t=${new Date().getTime()}`, {
+                        cache: 'no-store' 
+                    });
+                    
                     if (!response.ok) {
                         throw new Error('vocabulary.txt 파일을 불러올 수 없습니다.');
                     }
+                    
                     const text = await response.text();
-
-                    // 상태 초기화
-                    vocabList = [];
-                    stats = {};
-                    totalCorrect = 0;
-                    totalIncorrect = 0;
                     
-                    const lines = text.split('\n');
-                    
-                    lines.forEach(line => {
-                        const trimmedLine = line.trim();
-                        
-                        // 7. "# "로 시작하거나 빈 줄이면 제외
-                        if (trimmedLine && !trimmedLine.startsWith('# ')) {
-                            const parts = trimmedLine.split(',');
+                    // 5, 7. 파일 파싱
+                    vocabList = text.split('\n')
+                        .map(line => line.trim())
+                        .filter(line => line.length > 0 && !line.startsWith('# ')) // 7. # 주석 제외
+                        .map(line => {
+                            const parts = line.split(',');
                             if (parts.length >= 2) {
-                                // 콤마(,)가 뜻에 포함된 경우를 대비
                                 const word = parts[0].trim();
-                                const meaning = parts.slice(1).join(',').trim();
-                                
-                                if (word && meaning) {
-                                    vocabList.push({ word, meaning });
-                                    // 통계 객체 초기화
-                                    stats[word] = { correct: 0, incorrect: 0 };
-                                }
+                                const meaning = parts.slice(1).join(',').trim(); // 뜻에 콤마가 있어도 처리
+                                return { word, meaning };
                             }
-                        }
-                    });
+                            return null;
+                        })
+                        .filter(item => item !== null); // 형식이 잘못된 줄 제외
 
                     if (vocabList.length < 5) {
                         throw new Error('문제를 만들기에 단어 수가 부족합니다 (최소 5개 필요).');
                     }
                     
-                    // 첫 문제 출제
+                    initializeStats();
                     nextQuestion();
 
                 } catch (error) {
                     questionText.textContent = error.message;
-                    console.error(error);
-                } finally {
-                    isLoading = false;
+                    questionText.classList.add('text-red-600');
                 }
             }
 
             /**
-             * 다음 문제를 출제
+             * 12. 통계 객체 초기화
+             */
+            function initializeStats() {
+                stats = {};
+                vocabList.forEach(item => {
+                    // 단어를 key로 사용 (단어는 고유하다고 가정)
+                    stats[item.word] = { correct: 0, incorrect: 0 };
+                });
+                totalCorrect = 0;
+                totalIncorrect = 0;
+            }
+
+
+            // --- 문제 출제 로직 ---
+
+            /**
+             * 10. 다음 문제 출제 (랜덤, 반복)
              */
             function nextQuestion() {
-                isLoading = true;
-                feedbackText.textContent = ''; // 피드백 초기화
-                optionsContainer.innerHTML = ''; // 이전 버튼 삭제
+                if (vocabList.length === 0) return;
 
-                // 10. 단어 랜덤 선택
-                const correctIndex = Math.floor(Math.random() * vocabList.length);
-                currentQuestion = vocabList[correctIndex];
+                isAnswered = false;
+                feedbackText.textContent = '';
+                optionsContainer.innerHTML = ''; // 버튼 비우기
 
-                // 4개의 랜덤 오답 선택
-                const incorrectOptions = [];
-                while (incorrectOptions.length < 4) {
-                    const randomIndex = Math.floor(Math.random() * vocabList.length);
-                    const randomItem = vocabList[randomIndex];
-                    
-                    // 정답과 중복되지 않고, 오답 목록에도 없는지 확인
-                    if (randomItem.word !== currentQuestion.word && 
-                        !incorrectOptions.some(item => item.word === randomItem.word)) {
-                        incorrectOptions.push(randomItem);
-                    }
-                }
+                // 1. 랜덤 문제 선택
+                currentQuestion = vocabList[Math.floor(Math.random() * vocabList.length)];
 
-                // 보기 목록 (정답 1 + 오답 4)
-                const options = [currentQuestion, ...incorrectOptions];
-                
-                // 보기 순서 랜덤 셔플 (Fisher-Yates Shuffle)
-                for (let i = options.length - 1; i > 0; i--) {
-                    const j = Math.floor(Math.random() * (i + 1));
-                    [options[i], options[j]] = [options[j], options[i]];
-                }
-
-                // 17. 모드에 따라 문제와 보기 설정
+                // 2. 문제 제시 (모드에 따라)
                 if (currentMode === 'word-to-meaning') {
                     questionText.textContent = currentQuestion.word;
                 } else {
                     questionText.textContent = currentQuestion.meaning;
                 }
+
+                // 6. 5가지 보기 생성
+                
+                // 1) 정답 보기
+                let options = [currentQuestion];
+                
+                // 2) 오답 보기 4개 (정답과 중복되지 않게)
+                const incorrectOptions = vocabList.filter(item => item.word !== currentQuestion.word);
+                shuffleArray(incorrectOptions); // 오답 목록 섞기
+
+                for (let i = 0; i < 4 && i < incorrectOptions.length; i++) {
+                    options.push(incorrectOptions[i]);
+                }
+
+                // 3) 보기 섞기
+                shuffleArray(options);
 
                 // 6. 5가지 보기 버튼 생성
                 options.forEach(item => {
@@ -267,69 +271,102 @@
                         'text-base', 'sm:text-lg', 
                         'font-medium', 'text-gray-700', 'bg-white', 
                         'border', 'border-gray-300', 'rounded-lg', 'shadow-sm',
-                        'hover:bg-gray-50', 'focus:outline-none', 'focus:ring-2', 
-                        'focus:ring-indigo-500', 'focus:ring-opacity-50',
-                        'transition-all', 'duration-200', 'transform', 'hover:scale-105'
+                        'hover:bg-gray-100', 'hover:shadow-md', 'transition-all', 'duration-200',
+                        'focus:outline-none', 'focus:ring-2', 'focus:ring-blue-500', 'focus:ring-opacity-50',
+                        'break-keep' // 단어 줄바꿈 방지 (단어가 너무 길면 어쩔 수 없음)
                     );
                     
-                    // 17. 모드에 따라 버튼 텍스트 설정
+                    // 모드에 따라 버튼 텍스트 설정
                     if (currentMode === 'word-to-meaning') {
                         button.textContent = item.meaning;
                     } else {
                         button.textContent = item.word;
                     }
-
-                    // data 속성에 정답 확인용 '단어' 저장
-                    button.dataset.word = item.word;
                     
-                    button.addEventListener('click', handleOptionClick);
+                    // 버튼에 데이터 저장 (정답 판별용)
+                    button.dataset.word = item.word; 
+
+                    button.addEventListener('click', () => handleAnswer(button));
                     optionsContainer.appendChild(button);
                 });
-
-                isLoading = false;
             }
 
             /**
-             * 보기 버튼 클릭 이벤트 핸들러
+             * 8, 9. 정답 처리
              */
-            function handleOptionClick(event) {
-                if (isLoading) return; // 로딩 중 클릭 방지
-                isLoading = true;
+            function handleAnswer(selectedButton) {
+                if (isAnswered) return; // 이미 답했으면 중복 처리 방지
+                isAnswered = true;
 
-                const clickedButton = event.target;
-                const selectedWord = clickedButton.dataset.word;
+                const selectedWord = selectedButton.dataset.word;
                 const isCorrect = (selectedWord === currentQuestion.word);
+                const currentStats = stats[currentQuestion.word];
 
                 // 모든 버튼 비활성화
-                const allButtons = optionsContainer.querySelectorAll('.option-button');
-                allButtons.forEach(btn => btn.disabled = true);
+                disableButtons();
 
                 if (isCorrect) {
-                    // 8. 정답인 경우
-                    clickedButton.classList.add('correct');
+                    // 8. 정답
+                    selectedButton.classList.add('correct');
                     feedbackText.textContent = '정답';
-                    feedbackText.className = 'text-2xl font-bold text-green-600 animate-pulse';
-                    stats[currentQuestion.word].correct++;
+                    feedbackText.classList.remove('text-red-500');
+                    feedbackText.classList.add('text-green-500');
+                    currentStats.correct++;
                     totalCorrect++;
                 } else {
-                    // 9. 오답인 경우
-                    clickedButton.classList.add('incorrect');
+                    // 9. 오답
+                    selectedButton.classList.add('incorrect');
                     feedbackText.textContent = '오답';
-                    feedbackText.className = 'text-2xl font-bold text-red-600';
-                    stats[currentQuestion.word].incorrect++;
+                    feedbackText.classList.remove('text-green-500');
+                    feedbackText.classList.add('text-red-500');
+                    currentStats.incorrect++;
                     totalIncorrect++;
 
                     // 정답 버튼 찾아서 초록색으로 표시
-                    allButtons.forEach(btn => {
-                        if (btn.dataset.word === currentQuestion.word) {
-                            btn.classList.add('correct');
-                        }
-                    });
+                    const correctButton = Array.from(optionsContainer.children).find(
+                        btn => btn.dataset.word === currentQuestion.word
+                    );
+                    if (correctButton) {
+                        correctButton.classList.add('correct');
+                    }
                 }
 
                 // 10. 1.5초 후 다음 문제로
                 setTimeout(nextQuestion, 1500);
             }
+
+            /**
+             * 17. 모드 전환
+             */
+            function toggleMode() {
+                currentMode = (currentMode === 'word-to-meaning') ? 'meaning-to-word' : 'word-to-meaning';
+                
+                // 버튼 텍스트 업데이트
+                toggleModeBtn.textContent = (currentMode === 'word-to-meaning') ? '단어 ↔ 뜻' : '뜻 ↔ 단어';
+                
+                // 통계 초기화 및 새 문제 시작
+                initializeStats();
+                nextQuestion();
+            }
+
+
+            // --- 유틸리티 함수 ---
+
+            function disableButtons() {
+                Array.from(optionsContainer.children).forEach(btn => {
+                    btn.disabled = true;
+                });
+            }
+
+            function shuffleArray(array) {
+                for (let i = array.length - 1; i > 0; i--) {
+                    const j = Math.floor(Math.random() * (i + 1));
+                    [array[i], array[j]] = [array[j], array[i]];
+                }
+            }
+
+
+            // --- 모달 관련 함수 ---
 
             /**
              * 11. 결과 확인 모달 표시
@@ -354,7 +391,7 @@
                     const s = stats[word];
 
                     // 요청 사항 (1, 2): 정답 또는 오답 횟수가 1 이상인 (즉, 출제된) 문제만 표시
-                    if (s.correct > 0 || s.incorrect > 0) {
+                    if (s && (s.correct > 0 || s.incorrect > 0)) {
                         
                         // 12.d. 틀린 횟수가 1 이상이면 빨간색
                         const itemClass = s.incorrect > 0 ? 'text-red-600 font-semibold' : 'text-gray-900';
@@ -382,59 +419,47 @@
                 
                 // 12.a. 모달 팝업
                 resultsModal.classList.remove('hidden');
-                // 모달 애니메이션
+                // 애니메이션 트리거 (CSS 참조)
                 setTimeout(() => {
-                    modalContent.classList.remove('scale-95', 'opacity-0');
-                }, 10);
+                    modalContent.classList.add('opacity-1', 'scale-100');
+                    modalContent.classList.remove('opacity-0', 'scale-95');
+                }, 10); // 10ms 딜레이로 브라우저가 .hidden 제거를 인지하게 함
             }
 
             /**
-             * 결과 확인 모달 숨기기
+             * 12.a. 모달 닫기
              */
-            function hideResults() {
-                modalContent.classList.add('scale-95', 'opacity-0');
+            function closeModal() {
+                modalContent.classList.remove('opacity-1', 'scale-100');
+                modalContent.classList.add('opacity-0', 'scale-95');
+                
+                resultsModal.classList.add('closing'); // 닫힘 애니메이션 클래스 (선택사항)
+
+                // CSS transition 시간(300ms) 후 모달 숨기기
                 setTimeout(() => {
                     resultsModal.classList.add('hidden');
-                }, 300); // transition 시간과 일치
-            }
-
-            /**
-             * 16. 문제 모드 (단어/뜻) 변경
-             */
-            function toggleMode() {
-                if (isLoading) return; // 문제 로딩 중에는 변경 방지
-
-                if (currentMode === 'word-to-meaning') {
-                    currentMode = 'meaning-to-word';
-                    toggleModeBtn.textContent = '뜻 ↔ 단어';
-                } else {
-                    currentMode = 'word-to-meaning';
-                    toggleModeBtn.textContent = '단어 ↔ 뜻';
-                }
-
-                // 17. 모드 변경 시 통계 초기화 및 재시작
-                loadVocabulary();
+                    resultsModal.classList.remove('closing');
+                }, 300);
             }
 
 
-            // --- 이벤트 리스너 연결 ---
-            toggleModeBtn.addEventListener('click', toggleMode);
+            // --- 이벤트 리스너 ---
             showResultsBtn.addEventListener('click', showResults);
-            closeModalBtn.addEventListener('click', hideResults);
-            
-            // 모달 바깥쪽 클릭 시 닫기
-            resultsModal.addEventListener('click', (event) => {
-                if (event.target === resultsModal) {
-                    hideResults();
+            closeModalBtn.addEventListener('click', closeModal);
+            toggleModeBtn.addEventListener('click', toggleMode);
+
+            // 모달 바깥 영역 클릭 시 닫기
+            resultsModal.addEventListener('click', (e) => {
+                if (e.target === resultsModal) {
+                    closeModal();
                 }
             });
 
-            // --- 초기 실행 ---
+            // --- 프로그램 시작 ---
             loadVocabulary();
         });
     </script>
 
 </body>
 </html>
-
 
