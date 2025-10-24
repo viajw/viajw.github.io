@@ -59,7 +59,7 @@
 
     <div class="container mx-auto max-w-2xl w-full p-4 sm:p-6">
         
-        <!-- [수정됨] 1. 그룹 선택 설정 화면 -->
+        <!-- 1. 그룹 선택 설정 화면 -->
         <div id="setup-container" class="bg-white rounded-2xl shadow-xl p-6 sm:p-8">
             <h1 class="text-2xl sm:text-3xl font-bold text-gray-800 mb-6 border-b pb-4">
                 어휘 연습: 설정
@@ -82,8 +82,6 @@
                     <p class="text-gray-500">vocabulary.txt 파일을 불러오는 중...</p>
                 </div>
             </div>
-
-            <!-- [수정됨] 모드 변경 섹션 제거됨 -->
             
             <!-- 퀴즈 시작 버튼 -->
             <button id="start-quiz-btn" class="w-full bg-indigo-600 hover:bg-indigo-700 text-white font-bold py-3 px-4 rounded-lg transition-all duration-200 shadow-md text-lg mt-4">
@@ -95,7 +93,7 @@
         <!-- 2. 퀴즈 화면 -->
         <div id="quiz-container" class="bg-white rounded-2xl shadow-xl p-6 sm:p-8">
             
-            <!-- [수정됨] 제목 및 버튼 영역 (모드 변경 버튼 추가) -->
+            <!-- 제목 및 버튼 영역 (모드 변경 버튼 추가) -->
             <div class="flex justify-between items-center mb-6">
                 <h1 id="main-title" class="text-2xl sm:text-3xl font-bold text-gray-800">
                     어휘 연습
@@ -132,7 +130,7 @@
         </div>
     </div>
 
-    <!-- 결과 확인 모달 (내용 동일) -->
+    <!-- 결과 확인 모달 -->
     <div id="results-modal" class="modal fixed inset-0 bg-gray-600 bg-opacity-50 overflow-y-auto h-full w-full items-center justify-center p-4">
         <div class="bg-white w-full max-w-lg mx-auto rounded-2xl shadow-lg">
             <!-- 모달 헤더 -->
@@ -174,6 +172,11 @@
                         </tbody>
                     </table>
                 </div>
+
+                <!-- [신규] 공유 버튼 -->
+                <button id="share-results-btn" class="w-full bg-blue-600 hover:bg-blue-700 text-white font-bold py-3 px-4 rounded-lg mt-6 transition-all duration-200 shadow-md">
+                    결과 공유하기
+                </button>
             </div>
         </div>
     </div>
@@ -192,7 +195,7 @@
         const questionText = document.getElementById('question-text');
         const optionsContainer = document.getElementById('options-container');
         const feedbackText = document.getElementById('feedback-text');
-        const toggleModeBtn = document.getElementById('toggle-mode-btn'); // [수정됨] 퀴즈 화면으로 이동
+        const toggleModeBtn = document.getElementById('toggle-mode-btn'); 
         const mainTitle = document.getElementById('main-title');
         const backToSetupBtn = document.getElementById('back-to-setup-btn');
 
@@ -203,12 +206,13 @@
         const totalStats = document.getElementById('total-stats');
         const statsTableBody = document.getElementById('stats-table-body');
         const statsTableHeader = document.getElementById('stats-table-header');
+        const shareResultsBtn = document.getElementById('share-results-btn'); // [신규]
 
         // --- 데이터 변수 ---
         let groupedVocabList = []; // { groupName: '1과', words: [{word, meaning}, ...] }
         let activeVocabList = []; // 현재 퀴즈에 사용될 단어 목록
         let vocabStats = {};
-        let currentMode = 'word-to-meaning'; // [수정됨] 기본값
+        let currentMode = 'word-to-meaning'; 
         let totalCorrect = 0;
         let totalIncorrect = 0;
         let isAnswered = false;
@@ -244,6 +248,7 @@
                     } 
                     else if (trimmedLine.includes(' - ')) {
                         if (currentGroup === null) {
+                            // @ 그룹 태그 없이 단어가 먼저 나오면 '기타' 그룹으로 자동 분류
                             currentGroup = { groupName: '기타', words: [] };
                             groupedVocabList.push(currentGroup);
                         }
@@ -262,7 +267,7 @@
                     throw new Error('단어장에 최소 5개 이상의 단어가 필요합니다 (주석 제외).');
                 }
 
-                populateGroupChecklist(); 
+                populateGroupChecklist(); // 그룹 목록 UI 생성
 
             } catch (error) {
                 console.error(error);
@@ -322,7 +327,7 @@
         }
 
         /**
-         * [수정됨] 퀴즈 시작 버튼 클릭 이벤트
+         * 퀴즈 시작 버튼 클릭 이벤트
          */
         startQuizBtn.addEventListener('click', () => {
             activeVocabList = [];
@@ -350,8 +355,7 @@
             setupContainer.style.display = 'none';
             quizContainer.style.display = 'block';
 
-            // [수정] 퀴즈 모드 기본값(단어->뜻)으로 설정
-            currentMode = 'word-to-meaning';
+            currentMode = 'word-to-meaning'; // 기본 모드
             mainTitle.textContent = '어휘 연습 (단어 ➔ 뜻)';
             
             resetStats(); // 통계 초기화
@@ -369,10 +373,9 @@
 
 
         /**
-         * [신규] 퀴즈 중 모드 변경
+         * 퀴즈 중 모드 변경
          */
         toggleModeBtn.addEventListener('click', () => {
-            // 모드 변경
             if (currentMode === 'word-to-meaning') {
                 currentMode = 'meaning-to-word';
                 mainTitle.textContent = '어휘 연습 (뜻 ➔ 단어)';
@@ -380,15 +383,13 @@
                 currentMode = 'word-to-meaning';
                 mainTitle.textContent = '어휘 연습 (단어 ➔ 뜻)';
             }
-            
-            // [수정] 즉시 통계 초기화 및 새 모드로 문제 시작
             resetStats();
             nextQuestion();
         });
 
 
         /**
-         * 12. 통계 초기화
+         * 통계 초기화
          */
         function resetStats() {
             vocabStats = {};
@@ -397,12 +398,8 @@
             activeVocabList.forEach(item => {
                 const key = item[keyProperty];
                 if (!vocabStats[key]) {
-                    // [수정] resetStats가 호출되는 시점에는 item이 누락될 수 있으므로,
-                    // checkAnswer에서 통계 객체를 생성하도록 로직 변경
-                    // 여기서는 단순 초기화만 수행
                     vocabStats[key] = { correct: 0, incorrect: 0, word: item.word, meaning: item.meaning };
                 } else {
-                    // 기존 통계가 있어도 점수는 리셋
                     vocabStats[key].correct = 0;
                     vocabStats[key].incorrect = 0;
                 }
@@ -413,7 +410,7 @@
         }
 
         /**
-         * 10. 다음 문제 출제
+         * 다음 문제 출제
          */
         function nextQuestion() {
             if (activeVocabList.length === 0) return;
@@ -459,7 +456,7 @@
         }
 
         /**
-         * 13. 모바일에서 글자 크기 조정
+         * 모바일에서 글자 크기 조정
          */
         function adjustFontSize(button) {
             const textLength = button.textContent.length;
@@ -484,7 +481,7 @@
         };
 
         /**
-         * 8, 9. 정답 확인
+         * 정답 확인
          */
         function checkAnswer(button, selectedAnswer, correctAnswer, questionKey) {
             if (isAnswered) return;
@@ -493,16 +490,13 @@
 
             const statKey = questionKey;
             
-            // [수정] 통계 객체가 없을 경우(모드 변경 직후 등) 새로 생성
             if (!vocabStats[statKey]) {
                 const entry = activeVocabList.find(item => item[currentMode === 'word-to-meaning' ? 'word' : 'meaning'] === statKey);
-                // 만약의 경우를 대비해 entry가 존재하는지 확인
                 if(entry) {
                     vocabStats[statKey] = { correct: 0, incorrect: 0, word: entry.word, meaning: entry.meaning };
                 } else {
-                    // entry를 못찾는 예외 상황 (이론상 발생 안 함)
                     console.error("Stat entry not found for key:", statKey);
-                    setTimeout(nextQuestion, 1500); // 다음 문제로 강제 이동
+                    setTimeout(nextQuestion, 1500); 
                     return;
                 }
             }
@@ -549,6 +543,9 @@
         closeModalBtn.addEventListener('click', () => {
             resultsModal.classList.remove('open');
         });
+        
+        // [신규] 공유 버튼 이벤트 리스너
+        shareResultsBtn.addEventListener('click', handleShare);
 
         /**
          * 12. 결과 확인 모달 표시
@@ -608,6 +605,92 @@
             }
 
             resultsModal.classList.add('open');
+        }
+
+        /**
+         * [신규] 공유할 텍스트 내용 생성
+         */
+        function getShareableText() {
+            let text = "📊 어휘 연습 결과\n\n";
+            
+            // 1. 시간
+            const now = new Date();
+            text += `공유 시간: ${now.toLocaleString('ko-KR')}\n`;
+            
+            // 2. 모드
+            const modeText = (currentMode === 'word-to-meaning') ? '단어 ➔ 뜻' : '뜻 ➔ 단어';
+            text += `퀴즈 모드: ${modeText}\n`;
+            
+            // 3. 전체 통계
+            text += `전체 통계: 정답 ${totalCorrect} / 오답 ${totalIncorrect}\n\n`;
+            
+            // 4. 개별 통계
+            text += "--- 개별 결과 ---\n";
+            const entries = Object.values(vocabStats)
+                                .filter(stat => stat.correct > 0 || stat.incorrect > 0)
+                                .sort((a, b) => (b.incorrect - b.correct) - (a.incorrect - a.correct)); // 오답 많은 순
+
+            if (entries.length === 0) {
+                text += "푼 문제가 없습니다.\n";
+            } else {
+                entries.forEach(stat => {
+                    const problemText = (currentMode === 'word-to-meaning') 
+                        ? `${stat.word} (${stat.meaning})`
+                        : `${stat.meaning} (${stat.word})`;
+                    
+                    // 틀린 항목에 ❌, 맞기만 한 항목에 ✅
+                    const icon = stat.incorrect > 0 ? '❌' : '✅';
+                    text += `[${icon}] ${problemText}\n`;
+                    text += `    (정답: ${stat.correct}회, 오답: ${stat.incorrect}회)\n`;
+                });
+            }
+            return text;
+        }
+
+        /**
+         * [신규] 공유 기능 처리 (Web Share API 또는 클립보드 복사)
+         */
+        async function handleShare() {
+            const shareText = getShareableText();
+            const shareButton = document.getElementById('share-results-btn');
+
+            if (navigator.share) {
+                // Web Share API (모바일에서 카톡, SMS 등 공유창 띄움)
+                try {
+                    await navigator.share({
+                        title: '어휘 연습 결과',
+                        text: shareText,
+                    });
+                } catch (err) {
+                    console.error('Share failed:', err);
+                }
+            } else {
+                // 클립보드 복사 (데스크톱 PC용)
+                try {
+                    // iFrame 환경 제약으로 인해 document.execCommand 사용
+                    const textarea = document.createElement('textarea');
+                    textarea.value = shareText;
+                    textarea.style.position = 'fixed'; // 화면에 보이지 않게
+                    textarea.style.opacity = 0;
+                    document.body.appendChild(textarea);
+                    textarea.select();
+                    document.execCommand('copy');
+                    document.body.removeChild(textarea);
+
+                    // 사용자 피드백
+                    const originalText = shareButton.textContent;
+                    shareButton.textContent = '✅ 클립보드에 복사됨!';
+                    shareButton.disabled = true;
+                    setTimeout(() => {
+                        shareButton.textContent = originalText;
+                        shareButton.disabled = false;
+                    }, 2000);
+
+                } catch (err) {
+                    console.error('Copy to clipboard failed:', err);
+                    alert('결과 복사에 실패했습니다.');
+                }
+            }
         }
 
         // --- 페이지 시작 ---
