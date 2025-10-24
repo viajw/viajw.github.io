@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>일본어 단어장</title>
+    <title>어휘 목록</title>
     <!-- 1. Tailwind CSS 로드 -->
     <script src="https://cdn.tailwindcss.com"></script>
     
@@ -11,7 +11,7 @@
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/static/pretendard.min.css" />
     <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+JP:wght@400;500;700&display=swap" rel="stylesheet">
     
-    <!-- Tailwind CSS 설정 스크립트 -->
+    <!-- Tailwind CSS 설정 스크립트 (폰트 적용) -->
     <script>
         tailwind.config = {
             theme: {
@@ -25,562 +25,470 @@
     </script>
     
     <style>
-        /* [수정] 단어/뜻 가리기 스타일 (셀 전체) */
-        .hide-cell-content {
-            background-color: #f3f4f6 !important; /* bg-gray-100 */
-            border-radius: 4px;
-            user-select: none;
-        }
-        /* [수정] 셀 안의 텍스트(span)를 투명하게 만듦 */
-        .hide-cell-content > span {
+        /* 단어/뜻 가리기 스타일 */
+        .hide-text {
             color: transparent !important;
-            user-select: none;
+            background-color: #f3f4f6; /* gray-100 */
+            border-radius: 4px;
+        }
+        
+        #wordlist-container {
+            display: none; 
+        }
+        #setup-container {
+            display: block; 
         }
 
-        /* [수정] 단어 가리기를 해도 사전 버튼은 보이도록 */
-        .hide-cell-content .dictionary-link {
-            color: #6b7280 !important; /* gray-500 */
-            background-color: transparent !important;
+        /* [신규] 팝업이 숨겨졌을 때 */
+        #group-popup.hidden {
+            display: none;
         }
 
-        /* [추가] 그룹 팝업 스타일 */
-        .group-popup {
-            position: absolute;
-            bottom: 100%; /* 단어 셀 바로 위에 */
-            left: 50%;
-            transform: translateX(-50%);
-            background-color: #374151; /* gray-700 */
-            color: white;
-            padding: 4px 10px;
-            border-radius: 6px;
-            font-size: 0.875rem; /* text-sm */
-            white-space: nowrap;
-            margin-bottom: 4px;
-            z-index: 10;
-            /* 말풍선 꼬리 */
-            &::after {
-                content: '';
-                position: absolute;
-                top: 100%;
-                left: 50%;
-                margin-left: -5px;
-                border-width: 5px;
-                border-style: solid;
-                border-color: #374151 transparent transparent transparent;
-            }
+        /* [신규] .hide-text가 적용된 셀 내부의 버튼 아이콘은 강제로 보이게 함 */
+        .hide-text button {
+            color: #9ca3af !important; /* text-gray-400 */
+        }
+        .hide-text button:hover {
+            color: #4b5563 !important; /* text-gray-600 */
         }
     </style>
 </head>
-<!-- [수정] 세로 중앙 정렬을 위해 flex 추가 -->
-<body class="bg-gray-100 min-h-screen font-sans flex items-center justify-center">
+<body class="bg-gray-100 flex items-center justify-center min-h-screen font-sans">
 
-    <!-- 전체 컨테이너 -->
-    <div class="container mx-auto max-w-2xl w-full p-4">
+    <div class="container mx-auto max-w-2xl w-full p-4 sm:p-6">
         
-        <!-- === 1. 설정 화면 (기본 표시) === -->
-        <div id="setup-container">
-            <div class="bg-white rounded-2xl shadow-xl p-6 sm:p-8">
-                <h1 class="text-2xl sm:text-3xl font-bold text-gray-800 mb-6">
-                    단어장: 설정
-                </h1>
-                
-                <!-- 1. 그룹 선택 -->
-                <div class="mb-6">
-                    <h2 class="text-lg font-semibold text-gray-700 mb-3">
-                        표시할 그룹 선택
-                    </h2>
-                    <div class="border rounded-lg p-4 max-h-60 overflow-y-auto">
-                        <div class="flex items-center border-b pb-2 mb-2">
-                            <input id="select-all-groups" type="checkbox" class="h-5 w-5 text-indigo-600 border-gray-300 rounded focus:ring-indigo-500">
-                            <label for="select-all-groups" class="ml-3 block text-base font-bold text-gray-900">
-                                전체 선택
-                            </label>
-                        </div>
-                        <div id="group-checkbox-list" class="space-y-2 mt-2">
-                            <!-- JS로 그룹 체크박스 생성 -->
-                            <p class="text-gray-500">vocabulary.txt 파일을 불러오는 중...</p>
-                        </div>
-                    </div>
-                    <p id="group-selection-error" class="text-red-500 text-sm mt-2 hidden">
-                        표시할 그룹을 1개 이상 선택하세요.
-                    </p>
-                </div>
+        <!-- 1. 그룹 선택 설정 화면 -->
+        <div id="setup-container" class="bg-white rounded-2xl shadow-xl p-6 sm:p-8">
+            <h1 class="text-2xl sm:text-3xl font-bold text-gray-800 mb-6 border-b pb-4">
+                단어장: 설정
+            </h1>
 
-                <!-- 단어장 보기 버튼 -->
-                <button id="show-wordlist-btn" class="w-full bg-indigo-600 hover:bg-indigo-700 text-white font-bold py-3 px-4 rounded-lg transition-all duration-200 shadow-md">
-                    단어장 보기
-                </button>
+            <div class="mb-6">
+                <label class="block text-lg font-semibold text-gray-700 mb-3">표시할 그룹 선택</label>
+                <div id="group-selection-error" class="text-red-500 text-sm mb-3 hidden"></div>
+                <!-- 전체 선택 -->
+                <div class="flex items-center border-b pb-2 mb-2">
+                    <input type="checkbox" id="select-all-groups" class="h-5 w-5 text-indigo-600 rounded border-gray-300 focus:ring-indigo-500">
+                    <label for="select-all-groups" class="ml-3 block text-base font-bold text-gray-900">
+                        전체 선택
+                    </label>
+                </div>
+                <!-- 그룹 체크리스트 -->
+                <div id="group-checklist" class="max-h-60 overflow-y-auto space-y-2 pr-2">
+                    <!-- JS로 그룹 목록 생성 -->
+                    <p class="text-gray-500">vocabulary.txt 파일을 불러오는 중...</p>
+                </div>
             </div>
+            
+            <!-- 단어장 보기 버튼 -->
+            <button id="show-wordlist-btn" class="w-full bg-indigo-600 hover:bg-indigo-700 text-white font-bold py-3 px-4 rounded-lg transition-all duration-200 shadow-md text-lg mt-4">
+                단어장 보기
+            </button>
         </div>
 
-        <!-- === 2. 단어장 화면 (숨겨짐) === -->
-        <div id="wordlist-container" class="hidden">
-            <div class="bg-white rounded-2xl shadow-xl p-6 sm:p-8">
-                <!-- 헤더: 제목 + 설정 버튼 -->
-                <div class="flex justify-between items-center mb-4">
-                    <h1 id="main-title" class="text-xl sm:text-2xl font-bold text-gray-800">
-                        단어장
-                    </h1>
-                    <div class="flex space-x-2">
-                        <button id="randomize-btn" class="text-sm bg-gray-200 hover:bg-gray-300 text-gray-700 font-semibold py-2 px-3 rounded-lg transition-colors duration-200">
-                            랜덤
-                        </button>
-                        <button id="back-to-setup-btn" class="text-sm bg-gray-200 hover:bg-gray-300 text-gray-700 font-semibold py-2 px-3 rounded-lg transition-colors duration-200">
-                            ← 설정
-                        </button>
-                    </div>
-                </div>
+        <!-- 2. 단어장 화면 -->
+        <div id="wordlist-container" class="bg-white rounded-2xl shadow-xl p-6 sm:p-8">
 
-                <!-- 선택된 범위 표시 -->
-                <div id="selected-scopes-container" class="mb-4 p-3 bg-gray-50 rounded-lg text-sm text-gray-600 border">
-                    <!-- JS로 선택 범위 표시 -->
-                </div>
-                
-                <!-- 툴바 (버튼 색상 변경) -->
-                <div class="grid grid-cols-3 gap-2 mb-4">
-                    <button id="toggle-word-btn" class="w-full text-sm bg-blue-100 hover:bg-blue-200 text-blue-800 font-semibold py-2 px-3 rounded-lg transition-colors duration-200">
-                        단어 가리기
+            <!-- [수정] 제목 및 버튼 그룹 -->
+            <div class="flex justify-between items-center mb-4 border-b pb-4">
+                <h1 class="text-2xl sm:text-3xl font-bold text-gray-800">
+                    어휘 목록
+                </h1>
+                <!-- [수정] 버튼 2개를 flex 컨테이너로 묶음 -->
+                <div class="flex space-x-2">
+                    <!-- [신규] 랜덤 버튼 -->
+                    <button id="shuffle-list-btn" class="text-xs sm:text-sm bg-gray-200 hover:bg-gray-300 text-gray-700 font-semibold py-2 px-3 rounded-lg transition-colors duration-200">
+                        랜덤
                     </button>
-                    <button id="toggle-meaning-btn" class="w-full text-sm bg-green-100 hover:bg-green-200 text-green-800 font-semibold py-2 px-3 rounded-lg transition-colors duration-200">
-                        뜻 가리기
-                    </button>
-                    <!-- [수정] 단어 선택하기 버튼 (회색) -->
-                    <button id="toggle-select-mode-btn" class="w-full text-sm bg-gray-100 hover:bg-gray-200 text-gray-800 font-semibold py-2 px-3 rounded-lg transition-colors duration-200">
-                        단어 선택하기
+                    <button id="back-to-setup-btn" class="text-xs sm:text-sm bg-gray-200 hover:bg-gray-300 text-gray-700 font-semibold py-2 px-3 rounded-lg transition-colors duration-200">
+                        ← 설정
                     </button>
                 </div>
+            </div>
+            
+            <!-- 선택한 범위 표시 -->
+            <div id="selected-scopes-display" class="text-sm text-gray-600 mb-4 p-3 bg-gray-50 rounded-md">
+                <!-- JS로 선택 범위 표시 -->
+            </div>
 
-                <!-- 단어장 테이블 -->
-                <div class="overflow-x-auto max-h-[60vh] overflow-y-auto border rounded-lg">
-                    <table class="min-w-full divide-y divide-gray-200">
-                        <thead class="bg-gray-50 sticky top-0">
-                            <tr>
-                                <!-- 선택 체크박스 헤더 (숨겨짐) -->
-                                <th id="select-col-header" class="p-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider w-12 hidden">
-                                    <input type="checkbox" id="select-all-words" class="h-4 w-4 text-indigo-600 border-gray-300 rounded focus:ring-indigo-500">
-                                </th>
-                                <!-- 3열 구조 -->
-                                <th scope="col" class="p-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                                    단어
-                                </th>
-                                <th scope="col" class="p-3 text-center text-xs font-medium text-gray-500 uppercase tracking-wider w-16">
-                                    사전
-                                </th>
-                                <th scope="col" class="p-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                                    뜻
-                                </th>
-                            </tr>
-                        </thead>
-                        <tbody id="wordlist-table-body" class="bg-white divide-y divide-gray-200">
-                            <!-- JS로 단어 목록 생성 -->
-                        </tbody>
-                    </table>
-                </div>
-
-                <!-- 선택 공유 버튼 (숨겨짐) -->
-                <button id="share-selected-btn" class="hidden w-full bg-green-600 hover:bg-green-700 text-white font-bold py-3 px-4 rounded-lg transition-all duration-200 shadow-md mt-4">
-                    선택한 단어 공유하기
+            <!-- 가리기 버튼들 -->
+            <div class="flex space-x-2 mb-4">
+                <button id="toggle-word-btn" class="flex-1 text-sm bg-blue-100 hover:bg-blue-200 text-blue-800 font-semibold py-2 px-4 rounded-lg transition-colors duration-200">
+                    단어 가리기
                 </button>
-
+                <button id="toggle-meaning-btn" class="flex-1 text-sm bg-green-100 hover:bg-green-200 text-green-800 font-semibold py-2 px-4 rounded-lg transition-colors duration-200">
+                    뜻 가리기
+                </button>
+            </div>
+            
+            <!-- 단어장 테이블 -->
+            <div class="overflow-y-auto max-h-[60vh] border rounded-lg">
+                <table class="min-w-full divide-y divide-gray-200">
+                    <thead class="bg-gray-50 sticky top-0">
+                        <!-- [수정] 3열 (단어, 사전, 뜻) 헤더 -->
+                        <tr>
+                            <th scope="col" class="p-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                                단어
+                            </th>
+                            <th scope="col" class="p-3 text-center text-xs font-medium text-gray-500 uppercase tracking-wider w-16">
+                                사전
+                            </th>
+                            <th scope="col" class="p-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                                뜻
+                            </th>
+                        </tr>
+                    </thead>
+                    <tbody id="word-list-body" class="bg-white divide-y divide-gray-200">
+                        <!-- JS로 단어 목록 삽입 -->
+                    </tbody>
+                </table>
             </div>
         </div>
     </div>
 
-    <script>
-        // --- 1. DOM 요소 ---
-        const setupContainer = document.getElementById('setup-container');
-        const wordlistContainer = document.getElementById('wordlist-container');
-        
-        // 설정 화면
-        const groupCheckboxList = document.getElementById('group-checkbox-list');
-        const selectAllGroups = document.getElementById('select-all-groups');
-        const groupSelectionError = document.getElementById('group-selection-error');
-        const showWordlistBtn = document.getElementById('show-wordlist-btn');
+    <!-- [신규] 단어 그룹 팝업 -->
+    <div id="group-popup" class="hidden absolute bg-gray-800 text-white text-sm rounded-md px-3 py-1 shadow-lg z-50 cursor-pointer">
+        <!-- JS로 내용 채움 -->
+    </div>
 
-        // 단어장 화면
-        const mainTitle = document.getElementById('main-title');
-        const selectedScopesContainer = document.getElementById('selected-scopes-container');
+    <script>
+        // --- 설정 화면 요소 ---
+        const setupContainer = document.getElementById('setup-container');
+        const groupChecklist = document.getElementById('group-checklist');
+        const selectAllGroups = document.getElementById('select-all-groups');
+        const showWordlistBtn = document.getElementById('show-wordlist-btn');
+        const groupSelectionError = document.getElementById('group-selection-error');
+
+        // --- 단어장 화면 요소 ---
+        const wordlistContainer = document.getElementById('wordlist-container');
         const backToSetupBtn = document.getElementById('back-to-setup-btn');
-        const randomizeBtn = document.getElementById('randomize-btn');
+        const shuffleListBtn = document.getElementById('shuffle-list-btn'); // [신규]
+        const selectedScopesDisplay = document.getElementById('selected-scopes-display');
+        const wordListBody = document.getElementById('word-list-body');
         const toggleWordBtn = document.getElementById('toggle-word-btn');
         const toggleMeaningBtn = document.getElementById('toggle-meaning-btn');
-        const wordlistTableBody = document.getElementById('wordlist-table-body');
+        const groupPopup = document.getElementById('group-popup'); // [신규]
+
+        // --- 데이터 변수 ---
+        let groupedVocabList = []; 
+        let selectedGroupNames = []; 
+        let activeWordList = []; // [신규] 현재 표시 중인 단어 목록 (전역으로 이동)
         
-        // 선택 공유 요소
-        const toggleSelectModeBtn = document.getElementById('toggle-select-mode-btn');
-        const shareSelectedBtn = document.getElementById('share-selected-btn');
-        const selectAllWords = document.getElementById('select-all-words');
-        const selectColHeader = document.getElementById('select-col-header');
-        
-        // --- 2. 데이터 변수 ---
-        let wordGroups = {}; // { '그룹명': [{ word, meaning, group }, ...] }
-        let allGroups = [];   // ['그룹명1', '그룹명2', ...]
-        let activeWordList = []; // 현재 표시 중인 단어 목록
+        // 가리기 상태
         let isWordHidden = false;
         let isMeaningHidden = false;
-        let isSelectMode = false;
-
-        // --- 3. 함수 ---
 
         /**
-         * txt 파일 로드 및 그룹 파싱
+         * vocabulary.txt 파일 불러오기 (그룹 지원)
          */
         async function loadVocabulary() {
             try {
                 const response = await fetch('vocabulary.txt', { cache: 'no-store' });
-                if (!response.ok) throw new Error('파일 로딩 실패');
+                if (!response.ok) {
+                    throw new Error('vocabulary.txt 파일을 불러올 수 없습니다.');
+                }
                 const text = await response.text();
                 
-                wordGroups = {};
-                allGroups = [];
-                let currentGroup = '미분류';
+                groupedVocabList = []; 
+                let currentGroup = null;
 
                 const lines = text.split('\n');
 
                 for (const line of lines) {
                     const trimmedLine = line.trim();
-                    
+
+                    if (trimmedLine.length === 0 || trimmedLine.startsWith('# ')) {
+                        continue;
+                    }
+
                     if (trimmedLine.startsWith('@')) {
-                        currentGroup = trimmedLine.substring(1).trim() || '미분류';
-                        if (!wordGroups[currentGroup]) {
-                            wordGroups[currentGroup] = [];
-                            allGroups.push(currentGroup);
+                        const groupName = trimmedLine.substring(1).trim();
+                        currentGroup = { groupName: groupName, words: [] };
+                        groupedVocabList.push(currentGroup);
+                    } 
+                    else if (trimmedLine.includes(' - ')) {
+                        if (currentGroup === null) {
+                            currentGroup = { groupName: '기타', words: [] };
+                            groupedVocabList.push(currentGroup);
                         }
-                    } else if (trimmedLine.length > 0 && !trimmedLine.startsWith('#')) {
+
                         const parts = trimmedLine.split(' - ');
                         if (parts.length >= 2) {
                             const word = parts[0].trim();
                             const meaning = parts.slice(1).join(' - ').trim();
-                            
-                            if (!wordGroups[currentGroup]) {
-                                wordGroups[currentGroup] = [];
-                                allGroups.push(currentGroup);
-                            }
-                            wordGroups[currentGroup].push({ word, meaning, group: currentGroup });
+                            // [수정] 그룹 이름 저장
+                            currentGroup.words.push({ word, meaning, groupName: currentGroup.groupName });
                         }
                     }
                 }
-                displayGroupCheckboxes();
+                
+                if (groupedVocabList.length === 0 || groupedVocabList.every(g => g.words.length === 0)) {
+                    throw new Error('단어장에서 유효한 단어(@ 그룹 또는 "단어 - 뜻" 항목)를 찾을 수 없습니다.');
+                }
+
+                populateGroupChecklist(); 
+
             } catch (error) {
                 console.error(error);
-                groupCheckboxList.innerHTML = `<p class="text-red-500">vocabulary.txt 파일을 불러올 수 없습니다.</p>`;
+                groupChecklist.innerHTML = `<p class="text-red-500">${error.message}</p>`;
             }
         }
 
         /**
-         * 설정 화면에 그룹 체크박스 표시
+         * 그룹 선택 체크리스트 UI 생성
          */
-        function displayGroupCheckboxes() {
-            groupCheckboxList.innerHTML = '';
-            if (allGroups.length === 0) {
-                groupCheckboxList.innerHTML = `<p class="text-gray-500">단어 그룹을 찾을 수 없습니다.</p>`;
+        function populateGroupChecklist() {
+            groupChecklist.innerHTML = ''; 
+            groupedVocabList.forEach((group, index) => {
+                const div = document.createElement('div');
+                div.className = 'flex items-center';
+                
+                const input = document.createElement('input');
+                input.type = 'checkbox';
+                input.id = `group-${index}`;
+                input.value = index;
+                input.className = 'h-4 w-4 text-indigo-600 rounded border-gray-300 focus:ring-indigo-500 group-checkbox';
+                input.addEventListener('change', checkSelectAllState);
+                
+                const label = document.createElement('label');
+                label.htmlFor = `group-${index}`;
+                label.textContent = `${group.groupName} (${group.words.length}개)`;
+                label.className = 'ml-3 block text-sm font-medium text-gray-700';
+
+                div.appendChild(input);
+                div.appendChild(label);
+                groupChecklist.appendChild(div);
+            });
+        }
+
+        /**
+         * '전체 선택' 체크박스 클릭 이벤트
+         */
+        selectAllGroups.addEventListener('click', () => {
+            const isChecked = selectAllGroups.checked;
+            document.querySelectorAll('.group-checkbox').forEach(checkbox => {
+                checkbox.checked = isChecked;
+            });
+        });
+
+        /**
+         * 개별 체크박스가 변경될 때 '전체 선택' 상태 조절
+         */
+        function checkSelectAllState() {
+            const allCheckboxes = document.querySelectorAll('.group-checkbox');
+            const allChecked = Array.from(allCheckboxes).every(checkbox => checkbox.checked);
+            selectAllGroups.checked = allChecked;
+        }
+
+        /**
+         * 단어장 보기 버튼 클릭 이벤트
+         */
+        showWordlistBtn.addEventListener('click', () => {
+            activeWordList = []; // [수정] 전역 변수 초기화
+            selectedGroupNames = []; 
+            const selectedGroups = document.querySelectorAll('.group-checkbox:checked');
+            
+            if (selectedGroups.length === 0) {
+                groupSelectionError.textContent = '적어도 하나 이상의 그룹을 선택해주세요.';
+                groupSelectionError.classList.remove('hidden');
                 return;
             }
 
-            allGroups.forEach(group => {
-                const div = document.createElement('div');
-                div.className = 'flex items-center';
-                div.innerHTML = `
-                    <input id="group-${group}" type="checkbox" name="group-select" value="${group}" class="h-4 w-4 text-indigo-600 border-gray-300 rounded focus:ring-indigo-500">
-                    <label for="group-${group}" class="ml-3 block text-sm text-gray-700">
-                        ${group}
-                    </label>
-                `;
-                groupCheckboxList.appendChild(div);
+            selectedGroups.forEach(checkbox => {
+                const groupIndex = parseInt(checkbox.value);
+                const group = groupedVocabList[groupIndex];
+                activeWordList.push(...group.words);
+                selectedGroupNames.push(group.groupName);
             });
+            
+            groupSelectionError.classList.add('hidden');
+            
+            // [수정] 설정에서 돌아올 때는 항상 기본 순서로 표시되도록 자동 랜덤 섞기 제거
+            // activeWordList.sort(() => Math.random() - 0.5);
+
+            displaySelectedScopes(); // 선택 범위 표시
+            displayWordList(activeWordList); // 단어장 테이블 생성
+            
+            setupContainer.style.display = 'none';
+            wordlistContainer.style.display = 'block';
+        });
+
+        /**
+         * 설정으로 돌아가기 버튼
+         */
+        backToSetupBtn.addEventListener('click', () => {
+            closeGroupPopup(); // [신규] 팝업 닫기
+            wordlistContainer.style.display = 'none';
+            setupContainer.style.display = 'block';
+        });
+
+        /**
+         * [신규] 랜덤 섞기 버튼
+         */
+        shuffleListBtn.addEventListener('click', () => {
+            closeGroupPopup(); // [신규] 팝업 닫기
+            activeWordList.sort(() => Math.random() - 0.5); // 현재 목록 섞기
+            displayWordList(activeWordList); // 테이블 다시 그리기
+        });
+
+        /**
+         * 선택한 범위 UI 표시
+         */
+        function displaySelectedScopes() {
+            let scopeText = "";
+            if (groupedVocabList.length > 0 && selectedGroupNames.length === groupedVocabList.length) {
+                scopeText = "단어장 전체";
+            } else {
+                scopeText = selectedGroupNames.join(', ');
+            }
+            selectedScopesDisplay.innerHTML = `<span class="font-semibold">선택한 범위:</span> ${scopeText}`;
         }
 
         /**
-         * 단어장 화면에 목록 표시
+         * 단어장 테이블 생성 (활성 리스트 기준)
          */
-        function displayWordList(list) {
-            wordlistTableBody.innerHTML = '';
-            
-            list.forEach(item => {
+        function displayWordList(wordList) {
+            wordListBody.innerHTML = ''; 
+
+            if (wordList.length === 0) {
+                // [수정] colspan="3"
+                wordListBody.innerHTML = `<tr><td colspan="3" class="p-4 text-center text-gray-500">선택한 그룹에 단어가 없습니다.</td></tr>`;
+                return;
+            }
+
+            wordList.forEach(({ word, meaning, groupName }) => { 
                 const tr = document.createElement('tr');
-                tr.className = 'word-row';
 
-                // 1. 선택 모드용 체크박스 셀
-                const tdSelect = document.createElement('td');
-                tdSelect.className = 'select-col p-3 align-middle hidden';
-                tdSelect.innerHTML = `
-                    <input type="checkbox" class="word-checkbox h-4 w-4 text-indigo-600 border-gray-300 rounded focus:ring-indigo-500" 
-                           data-word="${item.word}" data-meaning="${item.meaning}">
-                `;
-
-                // 2. 단어 셀 (그룹 팝업 + 가리기 기능)
+                // [수정] 1. 단어 셀
                 const tdWord = document.createElement('td');
-                tdWord.className = 'word-cell p-3 align-middle relative';
+                tdWord.className = 'p-3 font-medium text-gray-900 word-cell transition-colors duration-150 cursor-pointer';
+
+                // 단어 텍스트용 span
                 const wordSpan = document.createElement('span');
-                wordSpan.className = 'text-base font-medium text-gray-900';
-                wordSpan.textContent = item.word;
-                if (isWordHidden) {
-                    tdWord.classList.add('hide-cell-content'); // [수정] 셀 전체에 가리기 적용
-                }
-                
+                wordSpan.className = 'text-base word-text-span'; 
+                wordSpan.textContent = word;
+                if (isWordHidden) wordSpan.classList.add('hide-text');
+
                 // 그룹 팝업 이벤트
-                wordSpan.onclick = () => showGroupPopup(wordSpan, item.group);
+                tdWord.addEventListener('click', (e) => showGroupPopup(e, groupName));
                 tdWord.appendChild(wordSpan);
 
-                // 3. 사전 버튼 셀
-                const tdDict = document.createElement('td');
-                tdDict.className = 'dict-cell p-3 align-middle text-center';
-                const dictButton = document.createElement('button');
-                dictButton.className = 'dictionary-link text-gray-500 hover:text-blue-600 transition-colors duration-150';
-                // [수정] 사전 아이콘 SVG (외부 링크)
-                dictButton.innerHTML = `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" class="w-5 h-5"> <path fill-rule="evenodd" d="M4.25 5.5a.75.75 0 0 0-.75.75v8.5c0 .414.336.75.75.75h8.5a.75.75 0 0 0 .75-.75v-4a.75.75 0 0 1 1.5 0v4A2.25 2.25 0 0 1 12.75 17H4.25A2.25 2.25 0 0 1 2 14.75v-8.5A2.25 2.25 0 0 1 4.25 4h5a.75.75 0 0 1 0 1.5h-5Z" clip-rule="evenodd" /> <path fill-rule="evenodd" d="M6.19 14.25a.75.75 0 1 1-1.06-1.06L13.94 4.44a.75.75 0 0 1 1.06 0l.75.75a.75.75 0 0 1 0 1.06L6.19 14.25Z" clip-rule="evenodd" /> </svg>`;
-                dictButton.onclick = (e) => {
-                    e.stopPropagation(); // 팝업 이벤트 방지
-                    openDictionary(item.word);
-                };
-                tdDict.appendChild(dictButton);
+                // [수정] 2. 사전 버튼 셀
+                const tdSearch = document.createElement('td');
+                tdSearch.className = 'p-3 text-center align-middle'; // 버튼 중앙 정렬
 
-                // 4. 뜻 셀
+                // 사전 버튼 (회색 톤, 책 아이콘)
+                const searchButton = document.createElement('button');
+                searchButton.className = 'text-gray-400 hover:text-gray-600 transition-colors duration-150 inline-block align-middle';
+                searchButton.innerHTML = `<svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                    <path stroke-linecap="round" stroke-linejoin="round" d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.523 5.754 18 7.5 18s3.332.523 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.523 18.246 18 16.5 18c-1.746 0-3.332.523-4.5 1.253" />
+                </svg>`;
+                searchButton.onclick = (e) => handleSearchClick(e, word);
+                tdSearch.appendChild(searchButton);
+
+
+                // [수정] 3. 뜻 셀
                 const tdMeaning = document.createElement('td');
-                tdMeaning.className = 'meaning-cell p-3 align-middle';
-                const meaningSpan = document.createElement('span');
-                meaningSpan.className = 'text-sm text-gray-700';
-                meaningSpan.textContent = item.meaning;
-                if (isMeaningHidden) {
-                    tdMeaning.classList.add('hide-cell-content'); // [수정] 셀 전체에 가리기 적용
-                }
-                
+                tdMeaning.className = 'p-3 text-sm text-gray-600 meaning-cell transition-colors duration-150 cursor-pointer'; 
+                tdMeaning.textContent = meaning;
+                if (isMeaningHidden) tdMeaning.classList.add('hide-text'); 
+
                 // 뜻 클릭 시 팝업 닫기
-                tdMeaning.onclick = closeAllPopups;
-                
-                tdMeaning.appendChild(meaningSpan);
+                tdMeaning.addEventListener('click', closeGroupPopup);
 
-                // 셀 조합
-                tr.appendChild(tdSelect);
                 tr.appendChild(tdWord);
-                tr.appendChild(tdDict);
+                tr.appendChild(tdSearch); // [수정] 사전 셀 추가
                 tr.appendChild(tdMeaning);
-                wordlistTableBody.appendChild(tr);
+                wordListBody.appendChild(tr);
             });
-            
-            // 선택 모드 상태에 따라 체크박스 열 표시/숨김
-            updateSelectModeUI();
         }
+        
+        // --- 기존 기능 (가리기, 사전 검색) ---
 
-        /**
-         * 그룹 팝업 표시
-         */
-        function showGroupPopup(targetElement, group) {
-            closeAllPopups(); // 기존 팝업 닫기
-            
-            const popup = document.createElement('div');
-            popup.className = 'group-popup';
-            popup.textContent = group;
-            
-            targetElement.closest('td').appendChild(popup);
-        }
+        toggleWordBtn.addEventListener('click', () => {
+            closeGroupPopup(); // [신규] 팝업 닫기
+            isWordHidden = !isWordHidden;
+            // [수정] 텍스트 span이 아닌 cell 전체에 적용
+            document.querySelectorAll('.word-cell').forEach(cell => {
+                cell.classList.toggle('hide-text', isWordHidden);
+            });
+            toggleWordBtn.textContent = isWordHidden ? '단어 보이기' : '단어 가리기';
+        });
 
-        /**
-         * 모든 그룹 팝업 닫기
-         */
-        function closeAllPopups() {
-            document.querySelectorAll('.group-popup').forEach(p => p.remove());
-        }
+        toggleMeaningBtn.addEventListener('click', () => {
+            closeGroupPopup(); // [신규] 팝업 닫기
+            isMeaningHidden = !isMeaningHidden;
+            document.querySelectorAll('.meaning-cell').forEach(cell => {
+                cell.classList.toggle('hide-text', isMeaningHidden);
+            });
+            toggleMeaningBtn.textContent = isMeaningHidden ? '뜻 보이기' : '뜻 가리기';
+        });
 
+
+        // --- [신규] 팝업 관련 함수 ---
         /**
-         * 사전 링크 열기
+         * 단어 소속 그룹 팝업 표시
          */
-        function openDictionary(word) {
-            let searchTerm = word;
-            // yomi(kanji)okurigana 형태 (예: やさ(優)しい)
-            const matchYomiKanji = word.match(/([^(]+)\(([\u4E00-\u9FAF]+)\)(.*)/);
-            
-            if (matchYomiKanji) {
-                // $1: やさ, $2: 優, $3: 喱 -> 優しい
-                searchTerm = matchYomiKanji[1] + matchYomiKanji[2] + matchYomiKanji[3];
-            } else {
-                // kanji(yomi) 형태 (예: 漢字(かんじ))
-                // 또는 괄호 없는 단어
-                searchTerm = word.split(/[\(|（]/)[0].trim();
+        function showGroupPopup(event, groupName) {
+            // [수정] 사전 버튼 셀은 팝업을 띄우지 않음 (tdWord만 띄움)
+            if (event.target.closest('button')) {
+                return;
             }
+
+            // [수정] 팝업 내용 설정 ("소속:" 제거)
+            groupPopup.textContent = groupName;
             
+            // 팝업 위치 설정 (클릭한 셀 기준)
+            const rect = event.currentTarget.getBoundingClientRect();
+            groupPopup.style.left = `${rect.left + window.scrollX}px`;
+            groupPopup.style.top = `${rect.bottom + window.scrollY + 5}px`; // 셀 하단
+            
+            // 팝업 보이기
+            groupPopup.classList.remove('hidden');
+            
+            // 팝업 자신을 클릭하면 닫히도록
+            groupPopup.onclick = closeGroupPopup;
+        }
+
+        /**
+         * 팝업 닫기
+         */
+        function closeGroupPopup() {
+            if (groupPopup) {
+                groupPopup.classList.add('hidden');
+            }
+        }
+
+
+        function handleSearchClick(event, word) {
+            const searchTerm = parseSearchTerm(word);
             const url = `https://ja.dict.naver.com/#/search?range=word&query=${encodeURIComponent(searchTerm)}`;
             window.open(url, '_blank');
         }
 
-        /**
-         * 선택된 범위 텍스트 표시
-         */
-        function displaySelectedScopes() {
-            const selectedGroups = Array.from(document.querySelectorAll('input[name="group-select"]:checked'))
-                                      .map(cb => cb.value);
-            
-            let scopeText = "선택 범위: ";
-            if (selectedGroups.length === allGroups.length || selectedGroups.length === 0) {
-                scopeText += "단어장 전체";
-            } else {
-                scopeText += selectedGroups.join(', ');
-            }
-            selectedScopesContainer.textContent = scopeText;
-        }
+        function parseSearchTerm(word) {
+            const kanjiRegex = /[\u4E00-\u9FAF]/;
+            const yomiRegex = /[\(|（]([^)\）]+)[\)|）]/;
+            const match = word.match(yomiRegex);
 
-        /**
-         * 선택 모드 UI 업데이트
-         */
-        function updateSelectModeUI() {
-            const cols = document.querySelectorAll('.select-col, #select-col-header');
-            if (isSelectMode) {
-                cols.forEach(col => col.classList.remove('hidden'));
-                shareSelectedBtn.classList.remove('hidden');
-                toggleSelectModeBtn.textContent = '선택 취소';
-                // [수정] 버튼 색상 변경 (회색 -> 빨강)
-                toggleSelectModeBtn.classList.replace('bg-gray-100', 'bg-red-100');
-                toggleSelectModeBtn.classList.replace('hover:bg-gray-200', 'hover:bg-red-200');
-                toggleSelectModeBtn.classList.replace('text-gray-800', 'text-red-800');
+            if (!match) {
+                return word; 
+            }
+
+            const yomi = match[1];
+            const beforeYomi = word.substring(0, match.index);
+            const afterYomi = word.substring(match.index + yomi.length + 2);
+
+            if (kanjiRegex.test(yomi)) {
+                return beforeYomi + yomi + afterYomi;
             } else {
-                cols.forEach(col => col.classList.add('hidden'));
-                shareSelectedBtn.classList.add('hidden');
-                toggleSelectModeBtn.textContent = '단어 선택하기';
-                // [수정] 버튼 색상 변경 (빨강 -> 회색)
-                toggleSelectModeBtn.classList.replace('bg-red-100', 'bg-gray-100');
-                toggleSelectModeBtn.classList.replace('hover:bg-red-200', 'hover:bg-gray-200');
-                toggleSelectModeBtn.classList.replace('text-red-800', 'text-gray-800');
-                // 모든 체크박스 해제
-                selectAllWords.checked = false;
-                document.querySelectorAll('.word-checkbox').forEach(cb => cb.checked = false);
+                return beforeYomi + afterYomi;
             }
         }
 
-        // --- 4. 이벤트 리스너 ---
-
-        // "단어장 보기" 버튼
-        showWordlistBtn.addEventListener('click', () => {
-            const selectedGroups = Array.from(document.querySelectorAll('input[name="group-select"]:checked'))
-                                      .map(cb => cb.value);
-            
-            if (selectedGroups.length === 0) {
-                groupSelectionError.classList.remove('hidden');
-                return;
-            }
-            
-            groupSelectionError.classList.add('hidden');
-            
-            activeWordList = [];
-            selectedGroups.forEach(group => {
-                activeWordList.push(...wordGroups[group]);
-            });
-            
-            // [수정] 설정에서 돌아올 때는 항상 기본 순서
-            // activeWordList.sort(() => ...); // 자동 랜덤 제거
-
-            displaySelectedScopes();
-            displayWordList(activeWordList);
-            
-            setupContainer.classList.add('hidden');
-            wordlistContainer.classList.remove('hidden');
-        });
-
-        // "← 설정" 버튼
-        backToSetupBtn.addEventListener('click', () => {
-            wordlistContainer.classList.add('hidden');
-            setupContainer.classList.remove('hidden');
-            
-            // 설정 복귀 시 선택 모드 초기화
-            if (isSelectMode) {
-                isSelectMode = false;
-                updateSelectModeUI();
-            }
-            // [추가] 설정 복귀 시 가리기 모드 초기화
-            if (isWordHidden) {
-                isWordHidden = false;
-                toggleWordBtn.textContent = '단어 가리기';
-            }
-            if (isMeaningHidden) {
-                isMeaningHidden = false;
-                toggleMeaningBtn.textContent = '뜻 가리기';
-            }
-        });
-
-        // "랜덤" 버튼
-        randomizeBtn.addEventListener('click', () => {
-            activeWordList.sort(() => Math.random() - 0.5);
-            displayWordList(activeWordList);
-        });
-
-        // "전체 선택" (그룹)
-        selectAllGroups.addEventListener('change', () => {
-            document.querySelectorAll('input[name="group-select"]')
-                    .forEach(cb => cb.checked = selectAllGroups.checked);
-        });
-
-        // "단어 가리기"
-        toggleWordBtn.addEventListener('click', () => {
-            isWordHidden = !isWordHidden;
-            toggleWordBtn.textContent = isWordHidden ? '단어 보이기' : '단어 가리기';
-            // [수정] 셀 전체에 적용/제거
-            wordlistTableBody.querySelectorAll('.word-cell').forEach(cell => {
-                cell.classList.toggle('hide-cell-content', isWordHidden);
-            });
-        });
-
-        // "뜻 가리기"
-        toggleMeaningBtn.addEventListener('click', () => {
-            isMeaningHidden = !isMeaningHidden;
-            toggleMeaningBtn.textContent = isMeaningHidden ? '뜻 보이기' : '뜻 가리기';
-            // [수정] 셀 전체에 적용/제거
-            wordlistTableBody.querySelectorAll('.meaning-cell').forEach(cell => {
-                cell.classList.toggle('hide-cell-content', isMeaningHidden);
-            });
-        });
-        
-        // "단어 선택하기"
-        toggleSelectModeBtn.addEventListener('click', () => {
-            isSelectMode = !isSelectMode;
-            updateSelectModeUI();
-        });
-
-        // "전체 선택" (단어)
-        selectAllWords.addEventListener('change', () => {
-            document.querySelectorAll('.word-checkbox')
-                    .forEach(cb => cb.checked = selectAllWords.checked);
-        });
-
-        // "선택한 단어 공유하기"
-        shareSelectedBtn.addEventListener('click', async () => {
-            const selectedItems = [];
-            document.querySelectorAll('.word-checkbox:checked').forEach(cb => {
-                selectedItems.push(`${cb.dataset.word} - ${cb.dataset.meaning}`);
-            });
-
-            if (selectedItems.length === 0) {
-                // [수정] alert 대신 커스텀 UI (추후 확장 가능)
-                alert('공유할 단어를 1개 이상 선택하세요.');
-                return;
-            }
-
-            const title = "나의 단어장";
-            const text = `${title}\n(총 ${selectedItems.length}개)\n\n${selectedItems.join('\n')}`;
-
-            if (navigator.share) {
-                try {
-                    await navigator.share({ title, text });
-                } catch (err) {
-                    console.error('Share failed:', err);
-                }
-            } else {
-                // 데스크톱 등 Web Share API 미지원 시 클립보드 복사
-                try {
-                    await navigator.clipboard.writeText(text);
-                    shareSelectedBtn.textContent = '✅ 클립보드에 복사됨!';
-                    setTimeout(() => {
-                        shareSelectedBtn.textContent = '선택한 단어 공유하기';
-                    }, 2000);
-                } catch (err) {
-                    console.error('Clipboard copy failed:', err);
-                    alert('클립보드 복사에 실패했습니다.');
-                }
-            }
-        });
-
-        // --- 5. 초기 실행 ---
+        // --- 페이지 시작 ---
         loadVocabulary();
 
     </script>
 </body>
 </html>
-
