@@ -303,8 +303,8 @@
             
             groupSelectionError.classList.add('hidden');
             
-            // 랜덤 섞기
-            activeWordList.sort(() => Math.random() - 0.5);
+            // [수정] 설정에서 돌아올 때는 항상 기본 순서로 표시되도록 자동 랜덤 섞기 제거
+            // activeWordList.sort(() => Math.random() - 0.5);
 
             displaySelectedScopes(); // 선택 범위 표시
             displayWordList(activeWordList); // 단어장 테이블 생성
@@ -492,6 +492,7 @@
     </script>
 </body>
 </html>
+
 
 
 
