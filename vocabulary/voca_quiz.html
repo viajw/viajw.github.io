@@ -11,12 +11,11 @@
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/static/pretendard.min.css" />
     <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+JP:wght@400;500;700&display=swap" rel="stylesheet">
     
-    <!-- [수정됨] Tailwind CSS 설정 스크립트 (폰트 적용) -->
+    <!-- Tailwind CSS 설정 스크립트 (폰트 적용) -->
     <script>
         tailwind.config = {
             theme: {
                 extend: {
-                    // 2. 폰트 적용 (Tailwind 기본 폰트 재정의)
                     fontFamily: {
                         sans: ['Pretendard', 'Noto Sans JP', '-apple-system', 'BlinkMacSystemFont', 'Segoe UI', 'Roboto', 'Helvetica Neue', 'Arial', 'sans-serif'],
                     },
@@ -26,34 +25,28 @@
     </script>
     
     <style>
-        /* 정답/오답 버튼 스타일 (Tailwind보다 우선 적용되도록 !important 추가) */
+        /* 정답/오답 버튼 스타일 */
         .correct-answer {
             background-color: #22c55e !important; /* Tailwind green-500 */
             color: white !important;
             border-color: #16a34a !important; /* Tailwind green-600 */
         }
-
         .wrong-answer {
             background-color: #ef4444 !important; /* Tailwind red-500 */
             color: white !important;
             border-color: #dc2626 !important; /* Tailwind red-600 */
         }
-
-        /* 모바일에서 텍스트 깨짐 방지 (버튼 텍스트) */
         .option-button {
             white-space: normal;
             line-height: 1.4;
         }
-
-        /* 모달 스타일 */
         .modal {
             display: none; /* 기본 숨김 */
         }
         .modal.open {
             display: flex; /* 보일 때 */
         }
-
-        /* [추가됨] 퀴즈/설정 컨테이너 숨김 처리 */
+        /* 퀴즈/설정 컨테이너 숨김 처리 */
         #quiz-container {
             display: none; /* 퀴즈 화면은 기본 숨김 */
         }
@@ -62,12 +55,11 @@
         }
     </style>
 </head>
-<!-- body 태그에 font-sans 클래스를 적용하여 Tailwind config가 적용되도록 함 -->
 <body class="bg-gray-100 flex items-center justify-center min-h-screen font-sans">
 
     <div class="container mx-auto max-w-2xl w-full p-4 sm:p-6">
         
-        <!-- [신규] 1. 그룹 선택 및 설정 화면 -->
+        <!-- [수정됨] 1. 그룹 선택 설정 화면 -->
         <div id="setup-container" class="bg-white rounded-2xl shadow-xl p-6 sm:p-8">
             <h1 class="text-2xl sm:text-3xl font-bold text-gray-800 mb-6 border-b pb-4">
                 어휘 연습: 설정
@@ -75,7 +67,7 @@
 
             <!-- 1. 그룹 선택 -->
             <div class="mb-6">
-                <label class="block text-lg font-semibold text-gray-700 mb-3">1. 퀴즈 볼 그룹 선택</label>
+                <label class="block text-lg font-semibold text-gray-700 mb-3">퀴즈 볼 그룹 선택</label>
                 <div id="group-selection-error" class="text-red-500 text-sm mb-3 hidden"></div>
                 <!-- 3. 전체 선택 -->
                 <div class="flex items-center border-b pb-2 mb-2">
@@ -85,67 +77,62 @@
                     </label>
                 </div>
                 <!-- 2. 그룹 체크리스트 -->
-                <div id="group-checklist" class="max-h-48 overflow-y-auto space-y-2 pr-2">
+                <div id="group-checklist" class="max-h-60 overflow-y-auto space-y-2 pr-2">
                     <!-- JS로 그룹 목록 생성 -->
                     <p class="text-gray-500">vocabulary.txt 파일을 불러오는 중...</p>
                 </div>
             </div>
 
-            <!-- 17. 모드 변경 버튼 -->
-            <div class="mb-6">
-                <label class="block text-lg font-semibold text-gray-700 mb-3">2. 퀴즈 모드</label>
-                <div class="flex justify-between items-center p-4 bg-gray-50 rounded-lg">
-                    <span id="current-mode-text" class="text-base font-medium text-gray-800">단어 ➔ 뜻</span>
-                    <button id="toggle-mode-btn" class="text-xs sm:text-sm bg-gray-200 hover:bg-gray-300 text-gray-700 font-semibold py-2 px-3 rounded-lg transition-colors duration-200">
-                        모드 변경 (뜻 ↔ 단어)
-                    </button>
-                </div>
-            </div>
+            <!-- [수정됨] 모드 변경 섹션 제거됨 -->
             
             <!-- 퀴즈 시작 버튼 -->
-            <button id="start-quiz-btn" class="w-full bg-indigo-600 hover:bg-indigo-700 text-white font-bold py-3 px-4 rounded-lg transition-all duration-200 shadow-md text-lg">
+            <button id="start-quiz-btn" class="w-full bg-indigo-600 hover:bg-indigo-700 text-white font-bold py-3 px-4 rounded-lg transition-all duration-200 shadow-md text-lg mt-4">
                 퀴즈 시작
             </button>
         </div>
 
 
-        <!-- [기존] 2. 퀴즈 화면 -->
+        <!-- 2. 퀴즈 화면 -->
         <div id="quiz-container" class="bg-white rounded-2xl shadow-xl p-6 sm:p-8">
             
-            <!-- 15. 제목 -->
+            <!-- [수정됨] 제목 및 버튼 영역 (모드 변경 버튼 추가) -->
             <div class="flex justify-between items-center mb-6">
                 <h1 id="main-title" class="text-2xl sm:text-3xl font-bold text-gray-800">
                     어휘 연습
                 </h1>
-                <!-- 설정으로 돌아가기 버튼 -->
-                <button id="back-to-setup-btn" class="text-xs sm:text-sm bg-gray-200 hover:bg-gray-300 text-gray-700 font-semibold py-2 px-3 rounded-lg transition-colors duration-200">
-                    ← 설정으로
-                </button>
+                <div class="flex space-x-2">
+                    <button id="toggle-mode-btn" class="text-xs sm:text-sm bg-gray-200 hover:bg-gray-300 text-gray-700 font-semibold py-2 px-3 rounded-lg transition-colors duration-200">
+                        뜻 ↔ 단어
+                    </button>
+                    <button id="back-to-setup-btn" class="text-xs sm:text-sm bg-gray-200 hover:bg-gray-300 text-gray-700 font-semibold py-2 px-3 rounded-lg transition-colors duration-200">
+                        ← 설정
+                    </button>
+                </div>
             </div>
 
-            <!-- 6. 문제 제시 영역 -->
+            <!-- 문제 제시 영역 -->
             <div id="question-container" class="bg-blue-50 border-l-4 border-blue-400 p-4 sm:p-6 rounded-lg mb-6 min-h-[80px] sm:min-h-[100px] flex items-center justify-center">
                 <p id="question-text" class="text-2xl sm:text-3xl font-semibold text-blue-900 text-center"></p>
             </div>
 
-            <!-- 6. 보기 버튼 영역 -->
+            <!-- 보기 버튼 영역 -->
             <div id="options-container" class="grid grid-cols-1 gap-3 sm:gap-4">
                 <!-- 보기 버튼은 JavaScript로 생성됩니다. -->
             </div>
 
-            <!-- 8, 9. 정답/오답 피드백 -->
+            <!-- 정답/오답 피드백 -->
             <div id="feedback-container" class="mt-4 sm:mt-6 text-center min-h-[2.5rem]">
                 <p id="feedback-text" class="text-2xl font-bold"></p>
             </div>
 
-            <!-- 11. 결과 확인 버튼 -->
+            <!-- 결과 확인 버튼 -->
             <button id="show-results-btn" class="w-full bg-indigo-600 hover:bg-indigo-700 text-white font-bold py-3 px-4 rounded-lg mt-6 sm:mt-8 transition-all duration-200 shadow-md">
                 결과 확인
             </button>
         </div>
     </div>
 
-    <!-- 12.a. 결과 확인 모달 -->
+    <!-- 결과 확인 모달 (내용 동일) -->
     <div id="results-modal" class="modal fixed inset-0 bg-gray-600 bg-opacity-50 overflow-y-auto h-full w-full items-center justify-center p-4">
         <div class="bg-white w-full max-w-lg mx-auto rounded-2xl shadow-lg">
             <!-- 모달 헤더 -->
@@ -160,13 +147,13 @@
             
             <!-- 모달 바디 -->
             <div class="p-6">
-                <!-- 12.b. 전체 통계 -->
+                <!-- 전체 통계 -->
                 <div class="text-center mb-4">
                     <span class="text-lg font-semibold text-gray-700">전체 통계:</span>
                     <span id="total-stats" class="text-lg font-bold ml-2">정답 0 / 오답 0</span>
                 </div>
                 
-                <!-- 12.c, e. 개별 통계 테이블 -->
+                <!-- 개별 통계 테이블 -->
                 <div class="overflow-y-auto max-h-80 border rounded-lg">
                     <table class="min-w-full divide-y divide-gray-200">
                         <thead class="bg-gray-50 sticky top-0">
@@ -193,24 +180,23 @@
 
 
     <script>
-        // --- [신규] 설정 화면 요소 ---
+        // --- 설정 화면 요소 ---
         const setupContainer = document.getElementById('setup-container');
         const groupChecklist = document.getElementById('group-checklist');
         const selectAllGroups = document.getElementById('select-all-groups');
         const startQuizBtn = document.getElementById('start-quiz-btn');
-        const currentModeText = document.getElementById('current-mode-text');
         const groupSelectionError = document.getElementById('group-selection-error');
 
-        // --- [기존] 퀴즈 화면 요소 ---
+        // --- 퀴즈 화면 요소 ---
         const quizContainer = document.getElementById('quiz-container');
         const questionText = document.getElementById('question-text');
         const optionsContainer = document.getElementById('options-container');
         const feedbackText = document.getElementById('feedback-text');
-        const toggleModeBtn = document.getElementById('toggle-mode-btn'); // 설정 화면의 버튼과 공유
+        const toggleModeBtn = document.getElementById('toggle-mode-btn'); // [수정됨] 퀴즈 화면으로 이동
         const mainTitle = document.getElementById('main-title');
         const backToSetupBtn = document.getElementById('back-to-setup-btn');
 
-        // --- [기존] 결과 모달 요소 ---
+        // --- 결과 모달 요소 ---
         const showResultsBtn = document.getElementById('show-results-btn');
         const resultsModal = document.getElementById('results-modal');
         const closeModalBtn = document.getElementById('close-modal-btn');
@@ -221,14 +207,14 @@
         // --- 데이터 변수 ---
         let groupedVocabList = []; // { groupName: '1과', words: [{word, meaning}, ...] }
         let activeVocabList = []; // 현재 퀴즈에 사용될 단어 목록
-        let vocabStats = {}; // { '단어': { correct: 0, incorrect: 0 } }
-        let currentMode = 'word-to-meaning'; // 'word-to-meaning' 또는 'meaning-to-word'
+        let vocabStats = {};
+        let currentMode = 'word-to-meaning'; // [수정됨] 기본값
         let totalCorrect = 0;
         let totalIncorrect = 0;
-        let isAnswered = false; // 중복 클릭 방지
+        let isAnswered = false;
 
         /**
-         * [수정됨] vocabulary.txt 파일 불러오기 (그룹 지원)
+         * vocabulary.txt 파일 불러오기 (그룹 지원)
          */
         async function loadVocabulary() {
             try {
@@ -238,7 +224,7 @@
                 }
                 const text = await response.text();
                 
-                groupedVocabList = []; // 그룹 배열 초기화
+                groupedVocabList = []; 
                 let currentGroup = null;
                 let wordCount = 0;
 
@@ -276,7 +262,7 @@
                     throw new Error('단어장에 최소 5개 이상의 단어가 필요합니다 (주석 제외).');
                 }
 
-                populateGroupChecklist(); // 그룹 선택 UI 생성
+                populateGroupChecklist(); 
 
             } catch (error) {
                 console.error(error);
@@ -285,10 +271,10 @@
         }
 
         /**
-         * [신규] 1, 2, 3. 그룹 선택 체크리스트 UI 생성
+         * 그룹 선택 체크리스트 UI 생성
          */
         function populateGroupChecklist() {
-            groupChecklist.innerHTML = ''; // 로딩 메시지 제거
+            groupChecklist.innerHTML = ''; 
             if (groupedVocabList.length === 0) {
                  groupChecklist.innerHTML = `<p class="text-gray-500">표시할 그룹이 없습니다.</p>`;
                  return;
@@ -303,7 +289,7 @@
                 input.id = `group-${index}`;
                 input.value = index;
                 input.className = 'h-4 w-4 text-indigo-600 rounded border-gray-300 focus:ring-indigo-500 group-checkbox';
-                input.addEventListener('change', checkSelectAllState); // 개별 선택 시 '전체 선택' 상태 업데이트
+                input.addEventListener('change', checkSelectAllState);
                 
                 const label = document.createElement('label');
                 label.htmlFor = `group-${index}`;
@@ -317,7 +303,7 @@
         }
 
         /**
-         * [신규] '전체 선택' 체크박스 클릭 이벤트
+         * '전체 선택' 체크박스 클릭 이벤트
          */
         selectAllGroups.addEventListener('click', () => {
             const isChecked = selectAllGroups.checked;
@@ -327,7 +313,7 @@
         });
 
         /**
-         * [신규] 개별 체크박스가 변경될 때 '전체 선택' 상태 조절
+         * 개별 체크박스가 변경될 때 '전체 선택' 상태 조절
          */
         function checkSelectAllState() {
             const allCheckboxes = document.querySelectorAll('.group-checkbox');
@@ -336,7 +322,7 @@
         }
 
         /**
-         * [신규] 퀴즈 시작 버튼 클릭 이벤트
+         * [수정됨] 퀴즈 시작 버튼 클릭 이벤트
          */
         startQuizBtn.addEventListener('click', () => {
             activeVocabList = [];
@@ -364,19 +350,16 @@
             setupContainer.style.display = 'none';
             quizContainer.style.display = 'block';
 
-            // 타이틀 업데이트
-            if (currentMode === 'word-to-meaning') {
-                mainTitle.textContent = '어휘 연습 (단어 ➔ 뜻)';
-            } else {
-                mainTitle.textContent = '어휘 연습 (뜻 ➔ 단어)';
-            }
+            // [수정] 퀴즈 모드 기본값(단어->뜻)으로 설정
+            currentMode = 'word-to-meaning';
+            mainTitle.textContent = '어휘 연습 (단어 ➔ 뜻)';
             
             resetStats(); // 통계 초기화
             nextQuestion(); // 첫 문제 출제
         });
 
         /**
-         * [신규] 설정으로 돌아가기 버튼
+         * 설정으로 돌아가기 버튼
          */
         backToSetupBtn.addEventListener('click', () => {
             quizContainer.style.display = 'none';
@@ -386,63 +369,59 @@
 
 
         /**
-         * [수정됨] 17. 모드 변경 (텍스트 업데이트 추가)
+         * [신규] 퀴즈 중 모드 변경
          */
         toggleModeBtn.addEventListener('click', () => {
+            // 모드 변경
             if (currentMode === 'word-to-meaning') {
                 currentMode = 'meaning-to-word';
-                currentModeText.textContent = '뜻 ➔ 단어';
+                mainTitle.textContent = '어휘 연습 (뜻 ➔ 단어)';
             } else {
                 currentMode = 'word-to-meaning';
-                currentModeText.textContent = '단어 ➔ 뜻';
+                mainTitle.textContent = '어휘 연습 (단어 ➔ 뜻)';
             }
-            // 퀴즈가 진행 중이었다면 통계 초기화
-            if (quizContainer.style.display === 'block') {
-                resetStats();
-            }
+            
+            // [수정] 즉시 통계 초기화 및 새 모드로 문제 시작
+            resetStats();
+            nextQuestion();
         });
 
 
         /**
-         * [수정됨] 12. 통계 초기화 (activeVocabList 기준)
+         * 12. 통계 초기화
          */
         function resetStats() {
             vocabStats = {};
             const keyProperty = currentMode === 'word-to-meaning' ? 'word' : 'meaning';
             
-            // [수정] 활성화된 단어장 기준으로만 통계 객체 생성
             activeVocabList.forEach(item => {
                 const key = item[keyProperty];
                 if (!vocabStats[key]) {
+                    // [수정] resetStats가 호출되는 시점에는 item이 누락될 수 있으므로,
+                    // checkAnswer에서 통계 객체를 생성하도록 로직 변경
+                    // 여기서는 단순 초기화만 수행
                     vocabStats[key] = { correct: 0, incorrect: 0, word: item.word, meaning: item.meaning };
+                } else {
+                    // 기존 통계가 있어도 점수는 리셋
+                    vocabStats[key].correct = 0;
+                    vocabStats[key].incorrect = 0;
                 }
             });
 
             totalCorrect = 0;
             totalIncorrect = 0;
-            updateStatsUI();
         }
 
         /**
-         * 12.b. 전체 통계 UI 업데이트
-         */
-        function updateStatsUI() {
-            // (모달 내의 전체 통계는 모달 열릴 때 업데이트)
-        }
-
-        /**
-         * [수정됨] 10. 다음 문제 출제 (activeVocabList 기준)
+         * 10. 다음 문제 출제
          */
         function nextQuestion() {
             if (activeVocabList.length === 0) return;
-
-            // [수정] 포커스 제거 로직 (disableButtons에서 처리하므로 삭제)
             
             isAnswered = false;
             feedbackText.textContent = '';
-            optionsContainer.innerHTML = ''; // 이전 보기 삭제
+            optionsContainer.innerHTML = ''; 
 
-            // 1. 문제 단어 랜덤 선택 (활성 목록에서)
             const correctEntry = activeVocabList[Math.floor(Math.random() * activeVocabList.length)];
             let question, correctAnswer;
 
@@ -456,10 +435,8 @@
 
             questionText.textContent = question;
 
-            // 6. 5가지 보기 생성
             let options = [correctAnswer];
 
-            // 2. 오답 보기 4개 랜덤 선택 (활성 목록에서)
             while (options.length < 5) {
                 const randomEntry = activeVocabList[Math.floor(Math.random() * activeVocabList.length)];
                 const wrongAnswer = (currentMode === 'word-to-meaning') ? randomEntry.meaning : randomEntry.word;
@@ -469,10 +446,8 @@
                 }
             }
 
-            // 3. 보기 순서 랜덤 섞기
             options.sort(() => Math.random() - 0.5);
 
-            // 4. 보기 버튼 생성
             options.forEach(option => {
                 const button = document.createElement('button');
                 button.textContent = option;
@@ -508,21 +483,28 @@
             document.querySelectorAll('.option-button').forEach(adjustFontSize);
         };
 
-
         /**
          * 8, 9. 정답 확인
          */
         function checkAnswer(button, selectedAnswer, correctAnswer, questionKey) {
             if (isAnswered) return;
             isAnswered = true;
-            disableButtons(); // 모든 버튼 비활성화 및 포커스 제거
+            disableButtons(); 
 
             const statKey = questionKey;
             
-            // [수정] 통계 기록 시 word, meaning도 함께 저장
+            // [수정] 통계 객체가 없을 경우(모드 변경 직후 등) 새로 생성
             if (!vocabStats[statKey]) {
                 const entry = activeVocabList.find(item => item[currentMode === 'word-to-meaning' ? 'word' : 'meaning'] === statKey);
-                vocabStats[statKey] = { correct: 0, incorrect: 0, word: entry.word, meaning: entry.meaning };
+                // 만약의 경우를 대비해 entry가 존재하는지 확인
+                if(entry) {
+                    vocabStats[statKey] = { correct: 0, incorrect: 0, word: entry.word, meaning: entry.meaning };
+                } else {
+                    // entry를 못찾는 예외 상황 (이론상 발생 안 함)
+                    console.error("Stat entry not found for key:", statKey);
+                    setTimeout(nextQuestion, 1500); // 다음 문제로 강제 이동
+                    return;
+                }
             }
 
             if (selectedAnswer === correctAnswer) {
@@ -548,7 +530,6 @@
                 });
             }
             
-            updateStatsUI();
             setTimeout(nextQuestion, 1500);
         }
 
@@ -558,7 +539,6 @@
         function disableButtons() {
             Array.from(optionsContainer.children).forEach(btn => {
                 btn.disabled = true;
-                // [수정] 클릭 즉시 포커스 제거 (회색 음영 방지)
                 btn.blur();
             });
         }
@@ -585,21 +565,20 @@
             }
 
             // 3. 개별 통계 테이블 생성
-            statsTableBody.innerHTML = ''; // 기존 내용 초기화
+            statsTableBody.innerHTML = '';
             
-            // [수정] vocabStats 객체를 순회 (키는 문제로 나왔던 단어/뜻)
             const entries = Object.values(vocabStats);
 
-            if (entries.length === 0) {
+            const filteredEntries = entries.filter(stat => stat.correct > 0 || stat.incorrect > 0);
+
+            if (filteredEntries.length === 0) {
                  statsTableBody.innerHTML = `<tr><td colspan="3" class="p-4 text-center text-gray-500">아직 푼 문제가 없습니다.</td></tr>`;
             } else {
-                entries
-                    .filter(stat => stat.correct > 0 || stat.incorrect > 0) // (요청) 푼 문제만 표시
-                    .sort((a, b) => (b.incorrect - b.correct) - (a.incorrect - a.correct)) // 오답 많은 순 정렬
+                filteredEntries
+                    .sort((a, b) => (b.incorrect - b.correct) - (a.incorrect - a.correct)) // 오답 많은 순
                     .forEach(stat => {
                         const tr = document.createElement('tr');
                         
-                        // (요청) 오답이 1개 이상이면 배경색 추가
                         if (stat.incorrect > 0) {
                             tr.className = 'bg-red-50';
                         }
@@ -607,7 +586,6 @@
                         const tdProblem = document.createElement('td');
                         tdProblem.className = 'p-3 text-sm font-medium text-gray-900';
                         
-                        // (요청) 모드에 따라 표시 형식 변경
                         if (currentMode === 'word-to-meaning') {
                             tdProblem.textContent = `${stat.word} (${stat.meaning})`;
                         } else {
