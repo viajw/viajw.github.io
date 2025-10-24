@@ -95,6 +95,7 @@
             
             <!-- 제목 및 버튼 영역 (모드 변경 버튼 추가) -->
             <div class="flex justify-between items-center mb-6">
+                <!-- [수정] 1. 제목을 "어휘 연습"으로 고정 -->
                 <h1 id="main-title" class="text-2xl sm:text-3xl font-bold text-gray-800">
                     어휘 연습
                 </h1>
@@ -139,7 +140,7 @@
                     학습 결과
                 </h3>
                 <button id="close-modal-btn" class="text-gray-400 bg-transparent hover:bg-gray-200 hover:text-gray-900 rounded-lg text-sm p-1.5 ml-auto inline-flex items-center">
-                    <svg class="w-5 h-5" fill="currentColor" viewBox="0 0 20 20" xmlns="http://www.w3.org/2000/svg"><path fill-rule="evenodd" d="M4.293 4.293a1 1 0 011.414 0L10 8.586l4.293-4.293a1 1 0 111.414 1.414L11.414 10l4.293 4.293a1 1 0 01-1.414 1.414L10 11.414l-4.293 4.293a1 1 0 01-1.414-1.414L8.586 10 4.293 5.707a1 1 0 010-1.414z" clip-rule="evenodd"></path></svg>
+                    <svg class="w-5 h-5" fill="currentColor" viewBox="0 0 20 20" xmlns="http://www.w3.org/2000/svg"><path fill-rule="evenodd" d="M4.293 4.293 1 1 0 011.414 0L10 8.586l4.293-4.293a1 1 0 111.414 1.414L11.414 10l4.293 4.293a1 1 0 01-1.414 1.414L10 11.414l-4.293 4.293a1 1 0 01-1.414-1.414L8.586 10 4.293 5.707a1 1 0 010-1.414z" clip-rule="evenodd"></path></svg>
                 </button>
             </div>
             
@@ -173,9 +174,9 @@
                     </table>
                 </div>
 
-                <!-- [신규] 공유 버튼 -->
+                <!-- [수정] 2. 버튼 이름 변경 -->
                 <button id="share-results-btn" class="w-full bg-blue-600 hover:bg-blue-700 text-white font-bold py-3 px-4 rounded-lg mt-6 transition-all duration-200 shadow-md">
-                    결과 공유하기
+                    오답 노트 공유하기
                 </button>
             </div>
         </div>
@@ -206,7 +207,7 @@
         const totalStats = document.getElementById('total-stats');
         const statsTableBody = document.getElementById('stats-table-body');
         const statsTableHeader = document.getElementById('stats-table-header');
-        const shareResultsBtn = document.getElementById('share-results-btn'); // [신규]
+        const shareResultsBtn = document.getElementById('share-results-btn');
 
         // --- 데이터 변수 ---
         let groupedVocabList = []; // { groupName: '1과', words: [{word, meaning}, ...] }
@@ -356,7 +357,8 @@
             quizContainer.style.display = 'block';
 
             currentMode = 'word-to-meaning'; // 기본 모드
-            mainTitle.textContent = '어휘 연습 (단어 ➔ 뜻)';
+            // [수정] 1. 제목에서 괄호 제거
+            mainTitle.textContent = '어휘 연습';
             
             resetStats(); // 통계 초기화
             nextQuestion(); // 첫 문제 출제
@@ -378,10 +380,12 @@
         toggleModeBtn.addEventListener('click', () => {
             if (currentMode === 'word-to-meaning') {
                 currentMode = 'meaning-to-word';
-                mainTitle.textContent = '어휘 연습 (뜻 ➔ 단어)';
+                // [수정] 1. 제목에서 괄호 제거
+                mainTitle.textContent = '어휘 연습';
             } else {
                 currentMode = 'word-to-meaning';
-                mainTitle.textContent = '어휘 연습 (단어 ➔ 뜻)';
+                // [수정] 1. 제목에서 괄호 제거
+                mainTitle.textContent = '어휘 연습';
             }
             resetStats();
             nextQuestion();
@@ -415,6 +419,11 @@
         function nextQuestion() {
             if (activeVocabList.length === 0) return;
             
+            // [수정] 3. 다음 문제 시작 시, 모든 활성 포커스를 제거 (회색 음영 버그 수정)
+            if (document.activeElement) {
+                document.activeElement.blur();
+            }
+
             isAnswered = false;
             feedbackText.textContent = '';
             optionsContainer.innerHTML = ''; 
@@ -533,7 +542,7 @@
         function disableButtons() {
             Array.from(optionsContainer.children).forEach(btn => {
                 btn.disabled = true;
-                btn.blur();
+                btn.blur(); // 포커스 제거
             });
         }
 
@@ -544,7 +553,6 @@
             resultsModal.classList.remove('open');
         });
         
-        // [신규] 공유 버튼 이벤트 리스너
         shareResultsBtn.addEventListener('click', handleShare);
 
         /**
@@ -566,6 +574,7 @@
             
             const entries = Object.values(vocabStats);
 
+            // [수정] 2. 오답만 있는 항목도 포함 (stat.correct > 0 조건 제거)
             const filteredEntries = entries.filter(stat => stat.correct > 0 || stat.incorrect > 0);
 
             if (filteredEntries.length === 0) {
@@ -625,21 +634,25 @@
             text += `전체 통계: 정답 ${totalCorrect} / 오답 ${totalIncorrect}\n\n`;
             
             // 4. 개별 통계
-            text += "--- 개별 결과 ---\n";
+            // [수정] 2.b. 문구 변경
+            text += "----- 오답 체크 -----\n";
+            
+            // [수정] 2.a. 오답이 1회 이상인 항목만 필터링
             const entries = Object.values(vocabStats)
-                                .filter(stat => stat.correct > 0 || stat.incorrect > 0)
+                                .filter(stat => stat.incorrect > 0) 
                                 .sort((a, b) => (b.incorrect - b.correct) - (a.incorrect - a.correct)); // 오답 많은 순
 
             if (entries.length === 0) {
-                text += "푼 문제가 없습니다.\n";
+                // [수정] 2.a. 오답이 1회 이상인 항목만 필터링
+                text += "틀린 문제가 없습니다. 👍\n";
             } else {
                 entries.forEach(stat => {
                     const problemText = (currentMode === 'word-to-meaning') 
                         ? `${stat.word} (${stat.meaning})`
                         : `${stat.meaning} (${stat.word})`;
                     
-                    // 틀린 항목에 ❌, 맞기만 한 항목에 ✅
-                    const icon = stat.incorrect > 0 ? '❌' : '✅';
+                    // [수정] 2.a. 이제 ❌ 아이콘만 표시됨
+                    const icon = '❌';
                     text += `[${icon}] ${problemText}\n`;
                     text += `    (정답: ${stat.correct}회, 오답: ${stat.incorrect}회)\n`;
                 });
