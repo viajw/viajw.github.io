@@ -224,6 +224,7 @@
         let totalCorrect = 0;
         let totalIncorrect = 0;
         let isAnswered = false;
+        let selectedGroupNames = []; // [수정] 선택한 그룹 이름 저장
 
         /**
          * vocabulary.txt 파일 불러오기 (그룹 지원)
@@ -339,6 +340,7 @@
          */
         startQuizBtn.addEventListener('click', () => {
             activeVocabList = [];
+            selectedGroupNames = []; // [수정] 그룹명 리스트 초기화
             const selectedGroups = document.querySelectorAll('.group-checkbox:checked');
             
             if (selectedGroups.length === 0) {
@@ -349,7 +351,9 @@
 
             selectedGroups.forEach(checkbox => {
                 const groupIndex = parseInt(checkbox.value);
-                activeVocabList.push(...groupedVocabList[groupIndex].words);
+                const group = groupedVocabList[groupIndex]; // [수정] 그룹 정보 가져오기
+                activeVocabList.push(...group.words);
+                selectedGroupNames.push(group.groupName); // [수정] 그룹명 저장
             });
 
             if (activeVocabList.length < 5) {
@@ -378,6 +382,7 @@
             quizContainer.style.display = 'none';
             setupContainer.style.display = 'block';
             activeVocabList = []; // 활성화된 단어장 비우기
+            selectedGroupNames = []; // [수정] 그룹명 리스트 비우기
         });
 
 
@@ -646,7 +651,7 @@
         }
 
         /**
-         * 공유할 텍스트 내용 생성
+         * [수정] 공유할 텍스트 내용 생성
          */
         function getShareableText() {
             let text = "📊 어휘 연습 결과\n\n";
@@ -659,24 +664,29 @@
             const modeText = (currentMode === 'word-to-meaning') ? '단어 ➔ 뜻' : '뜻 ➔ 단어';
             text += `퀴즈 모드: ${modeText}\n`;
             
+            // [수정] 5. 퀴즈 범위 추가
+            let scopeText = "";
+            if (groupedVocabList.length > 0 && selectedGroupNames.length === groupedVocabList.length) {
+                scopeText = "단어장 전체";
+            } else {
+                scopeText = selectedGroupNames.join(', ');
+            }
+            text += `퀴즈 범위: ${scopeText}\n`;
+
             // 3. 전체 통계
             text += `전체 통계: 정답 ${totalCorrect} / 오답 ${totalIncorrect}\n\n`;
             
             // 4. 개별 통계
-            // 2.b. 문구 변경
             text += "----- 오답 체크 -----\n";
             
-            // 2.a. 오답이 1회 이상인 항목만 필터링
             const entries = Object.values(vocabStats)
                                 .filter(stat => stat.incorrect > 0) 
-                                .sort((a, b) => (b.incorrect - b.correct) - (a.incorrect - a.correct)); // 오답 많은 순
+                                .sort((a, b) => (b.incorrect - b.correct) - (a.incorrect - a.correct)); 
 
             if (entries.length === 0) {
-                // 2.a. 오답이 1회 이상인 항목만 필터링
                 text += "틀린 문제가 없습니다. 👍\n";
             } else {
                 entries.forEach(stat => {
-                    // stat 객체에는 항상 word와 meaning이 모두 들어있으므로 모드와 관계없이 완전한 정보 표시
                     const problemText = (currentMode === 'word-to-meaning') 
                         ? `${stat.word} (${stat.meaning})`
                         : `${stat.meaning} (${stat.word})`;
