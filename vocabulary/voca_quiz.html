@@ -25,21 +25,27 @@
     </script>
     
     <style>
-        /* 정답/오답 버튼 스타일 */
+        /* 2, 3. 정답/오답 버튼 스타일 (가장 우선 적용) */
         .correct-answer {
             background-color: #22c55e !important; /* Tailwind green-500 */
             color: white !important;
             border-color: #16a34a !important; /* Tailwind green-600 */
         }
+
         .wrong-answer {
             background-color: #ef4444 !important; /* Tailwind red-500 */
             color: white !important;
             border-color: #dc2626 !important; /* Tailwind red-600 */
         }
+        
+        /* 1. 보기 버튼 기본 스타일 */
         .option-button {
+            /* 기본 배경색은 흰색 */
+            background-color: white; 
             white-space: normal;
             line-height: 1.4;
         }
+
         .modal {
             display: none; /* 기본 숨김 */
         }
@@ -139,7 +145,7 @@
                 <h3 class="text-xl font-semibold text-gray-900">
                     학습 결과
                 </h3>
-                <!-- [수정됨] 닫기 버튼을 SVG에서 &times; 문자로 변경 -->
+                <!-- 닫기 버튼을 &times; 문자로 변경 -->
                 <button id="close-modal-btn" class="text-gray-400 bg-transparent hover:bg-gray-200 hover:text-gray-900 rounded-lg text-sm w-8 h-8 ml-auto inline-flex justify-center items-center">
                     <span class="text-2xl font-light">&times;</span>
                 </button>
@@ -381,13 +387,10 @@
         toggleModeBtn.addEventListener('click', () => {
             if (currentMode === 'word-to-meaning') {
                 currentMode = 'meaning-to-word';
-                // 1. 제목을 "어휘 연습"으로 고정
-                mainTitle.textContent = '어휘 연습';
             } else {
                 currentMode = 'word-to-meaning';
-                // 1. 제목을 "어휘 연습"으로 고정
-                mainTitle.textContent = '어휘 연습';
             }
+            // 제목은 항상 "어휘 연습"으로 고정됨
             resetStats();
             nextQuestion();
         });
@@ -422,7 +425,7 @@
         function nextQuestion() {
             if (activeVocabList.length === 0) return;
             
-            // 3. 다음 문제 시작 시, 모든 활성 포커스를 제거 (회색 음영 버그 수정)
+            // 다음 문제 시작 시, 모든 활성 포커스를 제거
             if (document.activeElement) {
                 document.activeElement.blur();
             }
@@ -462,7 +465,17 @@
                 button.textContent = option;
                 adjustFontSize(button);
                 button.onclick = () => checkAnswer(button, option, correctAnswer, question);
-                button.className = "option-button w-full bg-white hover:bg-gray-100 text-gray-800 font-medium py-3 sm:py-4 px-4 border border-gray-300 rounded-lg shadow-sm transition-all duration-150 ease-in-out";
+                // [수정] hover:bg-gray-100 클래스를 JS로 제어하기 위해 기본 HTML에서 제거
+                button.className = "option-button w-full bg-white text-gray-800 font-medium py-3 sm:py-4 px-4 border border-gray-300 rounded-lg shadow-sm transition-all duration-150 ease-in-out";
+                
+                // [수정] JS로 hover 이벤트 리스너 추가 (회색 버그 제어)
+                button.onmouseenter = () => {
+                    if (!isAnswered) button.style.backgroundColor = '#f3f4f6'; // gray-100
+                };
+                button.onmouseleave = () => {
+                    if (!isAnswered) button.style.backgroundColor = 'white';
+                };
+
                 optionsContainer.appendChild(button);
             });
         }
@@ -498,7 +511,7 @@
         function checkAnswer(button, selectedAnswer, correctAnswer, questionKey) {
             if (isAnswered) return;
             isAnswered = true;
-            disableButtons(); 
+            disableButtons(); // 모든 버튼 비활성화 (hover/focus 제거)
 
             const statKey = questionKey;
             
@@ -515,6 +528,7 @@
             }
 
             if (selectedAnswer === correctAnswer) {
+                // 2. 정답 (초록색)
                 button.classList.add('correct-answer');
                 feedbackText.textContent = '정답!';
                 feedbackText.className = 'text-2xl font-bold text-green-500';
@@ -523,6 +537,7 @@
                 totalCorrect++;
                 
             } else {
+                // 3. 오답 (빨간색)
                 button.classList.add('wrong-answer');
                 feedbackText.textContent = '오답!';
                 feedbackText.className = 'text-2xl font-bold text-red-500';
@@ -530,6 +545,7 @@
                 vocabStats[statKey].incorrect++;
                 totalIncorrect++;
 
+                // 3. 정답 버튼 초록색으로 표시
                 Array.from(optionsContainer.children).forEach(btn => {
                     if (btn.textContent === correctAnswer) {
                         btn.classList.add('correct-answer');
@@ -542,13 +558,20 @@
 
         /**
          * [수정됨] 답변 후 모든 버튼 비활성화 (회색 음영 버그 수정)
-         * btn.disabled = true 대신 pointer-events: none 사용
+         * hover:bg-gray-100 상태를 강제로 리셋
          */
         function disableButtons() {
             Array.from(optionsContainer.children).forEach(btn => {
-                // btn.disabled = true; // 이 속성이 회색 배경을 유발함
-                btn.style.pointerEvents = 'none'; // 클릭 이벤트만 막음
-                btn.blur(); // 포커스 제거
+                // 클릭 이벤트 비활성화
+                btn.style.pointerEvents = 'none'; 
+                // 포커스 제거
+                btn.blur(); 
+                
+                // [수정] !important 스타일이 적용되지 않은 버튼의 배경색을
+                // hover 상태(gray-100)에서 강제로 white로 리셋.
+                if (!btn.classList.contains('correct-answer') && !btn.classList.contains('wrong-answer')) {
+                    btn.style.backgroundColor = 'white';
+                }
             });
         }
 
@@ -698,7 +721,6 @@
                     // 사용자 피드백
                     const originalText = shareButton.textContent;
                     shareButton.textContent = '✅ 클립보드에 복사됨!';
-                    // [수정] disabled 대신 pointer-events 사용 (스타일 일관성)
                     shareButton.style.pointerEvents = 'none';
                     shareButton.classList.add('bg-green-600', 'hover:bg-green-700'); // 성공 피드백 색상
                     shareButton.classList.remove('bg-blue-600', 'hover:bg-blue-700');
