@@ -30,8 +30,11 @@
             background-color: #f3f4f6 !important; /* bg-gray-100 */
             border-radius: 4px;
             user-select: none;
-            /* [수정] 텍스트도 안보이게 */
+        }
+        /* [수정] 셀 안의 텍스트(span)를 투명하게 만듦 */
+        .hide-cell-content > span {
             color: transparent !important;
+            user-select: none;
         }
 
         /* [수정] 단어 가리기를 해도 사전 버튼은 보이도록 */
@@ -141,7 +144,8 @@
                     <button id="toggle-meaning-btn" class="w-full text-sm bg-green-100 hover:bg-green-200 text-green-800 font-semibold py-2 px-3 rounded-lg transition-colors duration-200">
                         뜻 가리기
                     </button>
-                    <button id="toggle-select-mode-btn" class="w-full text-sm bg-purple-100 hover:bg-purple-200 text-purple-800 font-semibold py-2 px-3 rounded-lg transition-colors duration-200">
+                    <!-- [수정] 단어 선택하기 버튼 (보라색 -> 회색) -->
+                    <button id="toggle-select-mode-btn" class="w-full text-sm bg-gray-100 hover:bg-gray-200 text-gray-800 font-semibold py-2 px-3 rounded-lg transition-colors duration-200">
                         단어 선택하기
                     </button>
                 </div>
@@ -323,8 +327,8 @@
                 tdDict.className = 'dict-cell p-3 align-middle text-center';
                 const dictButton = document.createElement('button');
                 dictButton.className = 'dictionary-link text-gray-500 hover:text-blue-600 transition-colors duration-150';
-                // [수정] 사전 아이콘 SVG
-                dictButton.innerHTML = `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" class="w-5 h-5"><path d="M.5 4.75a.75.75 0 0 1 .75-.75h11.5a.75.75 0 0 1 0 1.5H1.25a.75.75 0 0 1-.75-.75ZM.5 15.25a.75.75 0 0 1 .75-.75h11.5a.75.75 0 0 1 0 1.5H1.25a.75.75 0 0 1-.75-.75ZM15.5 2a.75.75 0 0 0-.75.75v14.5a.75.75 0 0 0 .75.75c2.306 0 4.25-1.944 4.25-4.25S17.806 9 15.5 9s-4.25 1.944-4.25 4.25c0 .352.045.694.128 1.025a.75.75 0 0 0 1.45.398A2.753 2.753 0 0 1 15.5 13.5c1.519 0 2.75 1.231 2.75 2.75S17.019 19 15.5 19H1.25a.75.75 0 0 1-.75-.75V2.75A.75.75 0 0 1 1.25 2H15.5Z"></path></svg>`;
+                // [수정] 사전 아이콘 SVG (책 모양)
+                dictButton.innerHTML = `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" class="w-5 h-5"> <path fill-rule="evenodd" d="M2 4.75C2 3.784 2.784 3 3.75 3h4.5c.966 0 1.75.784 1.75 1.75v11.5a.75.75 0 0 1-1.5 0V14.5H5.5A2.5 2.5 0 0 1 3 12V4.75Zm1.5.5v6.25a1 1 0 0 0 1 1h2.5V4.75a.25.25 0 0 0-.25-.25h-3.25Z" clip-rule="evenodd" /> <path fill-rule="evenodd" d="M18 4.75C18 3.784 17.216 3 16.25 3h-4.5c-.966 0-1.75.784-1.75 1.75v11.5a.75.75 0 0 0 1.5 0V14.5h2.75a2.5 2.5 0 0 0 2.5-2.5V4.75Zm-1.5.5v6.25a1 1 0 0 1-1 1h-2.5V4.75a.25.25 0 0 1 .25-.25h3.25Z" clip-rule="evenodd" /> </svg>`;
                 dictButton.onclick = (e) => {
                     e.stopPropagation(); // 팝업 이벤트 방지
                     openDictionary(item.word);
@@ -424,18 +428,18 @@
                 cols.forEach(col => col.classList.remove('hidden'));
                 shareSelectedBtn.classList.remove('hidden');
                 toggleSelectModeBtn.textContent = '선택 취소';
-                // [수정] 버튼 색상 변경
-                toggleSelectModeBtn.classList.replace('bg-purple-100', 'bg-red-100');
-                toggleSelectModeBtn.classList.replace('hover:bg-purple-200', 'hover:bg-red-200');
-                toggleSelectModeBtn.classList.replace('text-purple-800', 'text-red-800');
+                // [수정] 버튼 색상 변경 (회색 -> 빨강)
+                toggleSelectModeBtn.classList.replace('bg-gray-100', 'bg-red-100');
+                toggleSelectModeBtn.classList.replace('hover:bg-gray-200', 'hover:bg-red-200');
+                toggleSelectModeBtn.classList.replace('text-gray-800', 'text-red-800');
             } else {
                 cols.forEach(col => col.classList.add('hidden'));
                 shareSelectedBtn.classList.add('hidden');
                 toggleSelectModeBtn.textContent = '단어 선택하기';
-                // [수정] 버튼 색상 변경
-                toggleSelectModeBtn.classList.replace('bg-red-100', 'bg-purple-100');
-                toggleSelectModeBtn.classList.replace('hover:bg-red-200', 'hover:bg-purple-200');
-                toggleSelectModeBtn.classList.replace('text-red-800', 'text-purple-800');
+                // [수정] 버튼 색상 변경 (빨강 -> 회색)
+                toggleSelectModeBtn.classList.replace('bg-red-100', 'bg-gray-100');
+                toggleSelectModeBtn.classList.replace('hover:bg-red-200', 'hover:bg-gray-200');
+                toggleSelectModeBtn.classList.replace('text-red-800', 'text-gray-800');
                 // 모든 체크박스 해제
                 selectAllWords.checked = false;
                 document.querySelectorAll('.word-checkbox').forEach(cb => cb.checked = false);
