@@ -139,8 +139,9 @@
                 <h3 class="text-xl font-semibold text-gray-900">
                     학습 결과
                 </h3>
-                <button id="close-modal-btn" class="text-gray-400 bg-transparent hover:bg-gray-200 hover:text-gray-900 rounded-lg text-sm p-1.5 ml-auto inline-flex items-center">
-                    <svg class="w-5 h-5" fill="currentColor" viewBox="0 0 20 20" xmlns="http://www.w3.org/2000/svg"><path fill-rule="evenodd" d="M4.293 4.293a1 1 0 011.414 0L10 8.586l4.293-4.293a1 1 0 111.414 1.414L11.414 10l4.293 4.293a1 1 0 01-1.414 1.414L10 11.414l-4.293 4.293a1 1 0 01-1.414-1.414L8.586 10 4.293 5.707a1 1 0 010-1.414z" clip-rule="evenodd"></path></svg>
+                <!-- [수정됨] 닫기 버튼을 SVG에서 &times; 문자로 변경 -->
+                <button id="close-modal-btn" class="text-gray-400 bg-transparent hover:bg-gray-200 hover:text-gray-900 rounded-lg text-sm w-8 h-8 ml-auto inline-flex justify-center items-center">
+                    <span class="text-2xl font-light">&times;</span>
                 </button>
             </div>
             
@@ -401,9 +402,11 @@
             
             activeVocabList.forEach(item => {
                 const key = item[keyProperty];
+                // 통계 객체를 생성할 때, 나중에 공유하기/결과보기에 필요한 word, meaning을 모두 저장
                 if (!vocabStats[key]) {
                     vocabStats[key] = { correct: 0, incorrect: 0, word: item.word, meaning: item.meaning };
                 } else {
+                    // 이미 키가 존재하면 (예: 다른 그룹에 동일한 단어/뜻) 통계만 리셋
                     vocabStats[key].correct = 0;
                     vocabStats[key].incorrect = 0;
                 }
@@ -499,6 +502,7 @@
 
             const statKey = questionKey;
             
+            // 통계 객체가 없는 경우 (새로운 문제인 경우) 생성
             if (!vocabStats[statKey]) {
                 const entry = activeVocabList.find(item => item[currentMode === 'word-to-meaning' ? 'word' : 'meaning'] === statKey);
                 if(entry) {
@@ -576,7 +580,7 @@
             
             const entries = Object.values(vocabStats);
 
-            // 2. 오답만 있는 항목도 포함 (stat.correct > 0 조건 제거)
+            // 한 번이라도 푼 문제만 필터링
             const filteredEntries = entries.filter(stat => stat.correct > 0 || stat.incorrect > 0);
 
             if (filteredEntries.length === 0) {
@@ -649,13 +653,12 @@
                 text += "틀린 문제가 없습니다. 👍\n";
             } else {
                 entries.forEach(stat => {
+                    // stat 객체에는 항상 word와 meaning이 모두 들어있으므로 모드와 관계없이 완전한 정보 표시
                     const problemText = (currentMode === 'word-to-meaning') 
                         ? `${stat.word} (${stat.meaning})`
                         : `${stat.meaning} (${stat.word})`;
                     
-                    // 2.a. 이제 ❌ 아이콘만 표시됨
-                    const icon = '❌';
-                    text += `[${icon}] ${problemText}\n`;
+                    text += `❌ ${problemText}\n`;
                     text += `    (정답: ${stat.correct}회, 오답: ${stat.incorrect}회)\n`;
                 });
             }
@@ -695,10 +698,16 @@
                     // 사용자 피드백
                     const originalText = shareButton.textContent;
                     shareButton.textContent = '✅ 클립보드에 복사됨!';
-                    shareButton.disabled = true;
+                    // [수정] disabled 대신 pointer-events 사용 (스타일 일관성)
+                    shareButton.style.pointerEvents = 'none';
+                    shareButton.classList.add('bg-green-600', 'hover:bg-green-700'); // 성공 피드백 색상
+                    shareButton.classList.remove('bg-blue-600', 'hover:bg-blue-700');
+
                     setTimeout(() => {
                         shareButton.textContent = originalText;
-                        shareButton.disabled = false;
+                        shareButton.style.pointerEvents = 'auto';
+                        shareButton.classList.remove('bg-green-600', 'hover:bg-green-700');
+                        shareButton.classList.add('bg-blue-600', 'hover:bg-blue-700');
                     }, 2000);
 
                 } catch (err) {
