@@ -43,6 +43,14 @@
         #group-popup.hidden {
             display: none;
         }
+
+        /* [신규] .hide-text가 적용된 셀 내부의 버튼 아이콘은 강제로 보이게 함 */
+        .hide-text button {
+            color: #9ca3af !important; /* text-gray-400 */
+        }
+        .hide-text button:hover {
+            color: #4b5563 !important; /* text-gray-600 */
+        }
     </style>
 </head>
 <body class="bg-gray-100 flex items-center justify-center min-h-screen font-sans">
@@ -400,8 +408,9 @@
         toggleWordBtn.addEventListener('click', () => {
             closeGroupPopup(); // [신규] 팝업 닫기
             isWordHidden = !isWordHidden;
-            document.querySelectorAll('.word-text-span').forEach(span => {
-                span.classList.toggle('hide-text', isWordHidden);
+            // [수정] 텍스트 span이 아닌 cell 전체에 적용
+            document.querySelectorAll('.word-cell').forEach(cell => {
+                cell.classList.toggle('hide-text', isWordHidden);
             });
             toggleWordBtn.textContent = isWordHidden ? '단어 보이기' : '단어 가리기';
         });
@@ -426,8 +435,8 @@
                 return;
             }
 
-            // 팝업 내용 설정
-            groupPopup.textContent = `소속: ${groupName}`;
+            // [수정] 팝업 내용 설정 ("소속:" 제거)
+            groupPopup.textContent = groupName;
             
             // 팝업 위치 설정 (클릭한 셀 기준)
             const rect = event.currentTarget.getBoundingClientRect();
@@ -483,4 +492,6 @@
     </script>
 </body>
 </html>
+
+
 
