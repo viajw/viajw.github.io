@@ -26,7 +26,19 @@
     
     <style>
         /* 단어/뜻 가리기 스타일 */
-/* ... existing code ... -->
+        .hide-text {
+            color: transparent !important;
+            background-color: #f3f4f6; /* gray-100 */
+            border-radius: 4px;
+        }
+        
+        #wordlist-container {
+            display: none; 
+        }
+        #setup-container {
+            display: block; 
+        }
+
         /* [신규] 팝업이 숨겨졌을 때 */
         #group-popup.hidden {
             display: none;
@@ -384,11 +396,91 @@
         }
         
         // --- 기존 기능 (가리기, 사전 검색) ---
-/* ... existing code ... -->
+
+        toggleWordBtn.addEventListener('click', () => {
+            closeGroupPopup(); // [신규] 팝업 닫기
+            isWordHidden = !isWordHidden;
+            document.querySelectorAll('.word-text-span').forEach(span => {
+                span.classList.toggle('hide-text', isWordHidden);
+            });
+            toggleWordBtn.textContent = isWordHidden ? '단어 보이기' : '단어 가리기';
+        });
+
+        toggleMeaningBtn.addEventListener('click', () => {
+            closeGroupPopup(); // [신규] 팝업 닫기
+            isMeaningHidden = !isMeaningHidden;
+            document.querySelectorAll('.meaning-cell').forEach(cell => {
+                cell.classList.toggle('hide-text', isMeaningHidden);
+            });
+            toggleMeaningBtn.textContent = isMeaningHidden ? '뜻 보이기' : '뜻 가리기';
+        });
+
+
+        // --- [신규] 팝업 관련 함수 ---
+        /**
+         * 단어 소속 그룹 팝업 표시
+         */
         function showGroupPopup(event, groupName) {
             // [수정] 사전 버튼 셀은 팝업을 띄우지 않음 (tdWord만 띄움)
             if (event.target.closest('button')) {
                 return;
             }
-/* ... existing code ... -->
+
+            // 팝업 내용 설정
+            groupPopup.textContent = `소속: ${groupName}`;
+            
+            // 팝업 위치 설정 (클릭한 셀 기준)
+            const rect = event.currentTarget.getBoundingClientRect();
+            groupPopup.style.left = `${rect.left + window.scrollX}px`;
+            groupPopup.style.top = `${rect.bottom + window.scrollY + 5}px`; // 셀 하단
+            
+            // 팝업 보이기
+            groupPopup.classList.remove('hidden');
+            
+            // 팝업 자신을 클릭하면 닫히도록
+            groupPopup.onclick = closeGroupPopup;
+        }
+
+        /**
+         * 팝업 닫기
+         */
+        function closeGroupPopup() {
+            if (groupPopup) {
+                groupPopup.classList.add('hidden');
+            }
+        }
+
+
+        function handleSearchClick(event, word) {
+            const searchTerm = parseSearchTerm(word);
+            const url = `https://ja.dict.naver.com/#/search?range=word&query=${encodeURIComponent(searchTerm)}`;
+            window.open(url, '_blank');
+        }
+
+        function parseSearchTerm(word) {
+            const kanjiRegex = /[\u4E00-\u9FAF]/;
+            const yomiRegex = /[\(|（]([^)\）]+)[\)|）]/;
+            const match = word.match(yomiRegex);
+
+            if (!match) {
+                return word; 
+            }
+
+            const yomi = match[1];
+            const beforeYomi = word.substring(0, match.index);
+            const afterYomi = word.substring(match.index + yomi.length + 2);
+
+            if (kanjiRegex.test(yomi)) {
+                return beforeYomi + yomi + afterYomi;
+            } else {
+                return beforeYomi + afterYomi;
+            }
+        }
+
+        // --- 페이지 시작 ---
+        loadVocabulary();
+
+    </script>
+</body>
+</html>
 
