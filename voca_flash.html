@@ -1,0 +1,692 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>일본어 플래시카드</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/static/pretendard.min.css" />
+    <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+JP:wght@400;500;700&display=swap" rel="stylesheet">
+    
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    fontFamily: {
+                        sans: ['Pretendard', 'Noto Sans JP', 'sans-serif'],
+                    },
+                },
+            },
+        }
+    </script>
+
+    <style>
+        ruby rt { font-size: 0.5em; color: #6b7280; user-select: none; }
+        .perspective-1000 { perspective: 1000px; }
+        .card-inner {
+            position: relative; width: 100%; height: 100%;
+            transition: transform 0.6s; transform-style: preserve-3d; cursor: pointer;
+        }
+        .card-inner.is-flipped { transform: rotateY(180deg); }
+        .card-face {
+            position: absolute; width: 100%; height: 100%;
+            -webkit-backface-visibility: hidden; backface-visibility: hidden;
+            display: flex; align-items: center; justify-content: center;
+            border-radius: 1rem;
+            box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05);
+        }
+        .card-front { background-color: white; color: #1f2937; }
+        .card-back {
+            background-color: #f8fafc; color: #111827;
+            transform: rotateY(180deg); border: 2px solid #e2e8f0;
+        }
+        .disabled-option {
+            opacity: 0.5;
+            pointer-events: none;
+            filter: grayscale(100%);
+        }
+    </style>
+</head>
+<body class="bg-gray-100 flex flex-col items-center justify-center min-h-screen font-sans p-4">
+
+    <div id="setup-container" class="w-full max-w-md bg-white rounded-2xl shadow-xl p-6 sm:p-8">
+        <h1 class="text-3xl font-bold text-gray-800 mb-2 text-center">플래시카드</h1>
+        <p class="text-center text-gray-500 mb-6">일본어 단어 암기 카드</p>
+        
+        <div class="mb-6">
+            <label class="block text-sm font-bold text-gray-700 mb-2">1. 학습 범위 선택</label>
+            <div class="border rounded-lg p-3 max-h-32 overflow-y-auto bg-gray-50">
+                <div class="flex items-center mb-2 pb-2 border-b">
+                    <input type="checkbox" id="select-all-groups" class="h-4 w-4 text-indigo-600 rounded">
+                    <label for="select-all-groups" class="ml-2 text-sm font-semibold">전체 선택</label>
+                </div>
+                <div id="group-checkbox-container">
+                    <p class="text-xs text-gray-500">파일 로딩 중...</p>
+                </div>
+            </div>
+        </div>
+
+        <div class="mb-6">
+            <label class="block text-sm font-bold text-gray-700 mb-2">2. 카드 모드 선택</label>
+            <div class="flex space-x-2">
+                <label class="flex-1 cursor-pointer">
+                    <input type="radio" name="card-mode" value="word-to-meaning" class="peer sr-only" checked>
+                    <div class="text-center py-3 px-2 border-2 rounded-lg peer-checked:border-indigo-500 peer-checked:bg-indigo-50 peer-checked:text-indigo-700 hover:bg-gray-50 transition-all">
+                        <span class="block text-xs text-gray-500">Front → Back</span>
+                        <span class="font-bold">단어 → 뜻</span>
+                    </div>
+                </label>
+                <label class="flex-1 cursor-pointer">
+                    <input type="radio" name="card-mode" value="meaning-to-word" class="peer sr-only">
+                    <div class="text-center py-3 px-2 border-2 rounded-lg peer-checked:border-indigo-500 peer-checked:bg-indigo-50 peer-checked:text-indigo-700 hover:bg-gray-50 transition-all">
+                        <span class="block text-xs text-gray-500">Front → Back</span>
+                        <span class="font-bold">뜻 → 단어</span>
+                    </div>
+                </label>
+            </div>
+        </div>
+
+        <div class="mb-6">
+            <label class="block text-sm font-bold text-gray-700 mb-2">
+                3. 학습 개수 설정 <span id="total-voca-display" class="text-indigo-600 text-xs font-normal ml-1">(총 0개 선택됨)</span>
+            </label>
+            <div class="flex flex-col space-y-2">
+                <label class="flex items-center p-3 border rounded-lg cursor-pointer hover:bg-gray-50 transition-colors">
+                    <input type="radio" name="count-mode" value="all" class="h-4 w-4 text-indigo-600 focus:ring-indigo-500" checked>
+                    <span class="ml-2 text-sm text-gray-700 font-medium">선택 범위 전체 학습</span>
+                </label>
+                
+                <div class="flex items-center space-x-2">
+                    <label class="flex-1 flex items-center p-3 border rounded-lg cursor-pointer hover:bg-gray-50 transition-colors">
+                        <input type="radio" name="count-mode" value="custom" class="h-4 w-4 text-indigo-600 focus:ring-indigo-500">
+                        <span class="ml-2 text-sm text-gray-700 font-medium">개수 직접 입력</span>
+                    </label>
+                    <input type="number" id="custom-count-input" class="w-24 p-3 border rounded-lg text-center font-bold text-gray-700 focus:ring-2 focus:ring-indigo-500 focus:outline-none disabled:bg-gray-100 disabled:text-gray-400" placeholder="0" disabled min="1">
+                </div>
+            </div>
+        </div>
+
+        <div class="mb-6">
+            <label class="block text-sm font-bold text-gray-700 mb-2">4. 카드 순서 설정</label>
+            <div class="flex space-x-2">
+                <label class="flex-1 cursor-pointer" id="order-random-label">
+                    <input type="radio" name="card-order" value="random" class="peer sr-only" checked>
+                    <div class="text-center py-3 px-2 border-2 rounded-lg peer-checked:border-indigo-500 peer-checked:bg-indigo-50 peer-checked:text-indigo-700 hover:bg-gray-50 transition-all">
+                        <span class="block text-xs text-gray-500">Shuffle</span>
+                        <span class="font-bold">랜덤 섞기</span>
+                    </div>
+                </label>
+                <label class="flex-1 cursor-pointer transition-opacity duration-200" id="order-sequential-label">
+                    <input type="radio" name="card-order" value="sequential" class="peer sr-only">
+                    <div class="text-center py-3 px-2 border-2 rounded-lg peer-checked:border-indigo-500 peer-checked:bg-indigo-50 peer-checked:text-indigo-700 hover:bg-gray-50 transition-all">
+                        <span class="block text-xs text-gray-500">As Listed</span>
+                        <span class="font-bold">단어장 순서대로</span>
+                    </div>
+                </label>
+            </div>
+            <p id="order-warning-msg" class="text-xs text-orange-500 mt-1 hidden">※ 개수 제한 시 랜덤 섞기만 가능합니다.</p>
+        </div>
+
+        <div class="mb-8">
+            <label class="block text-sm font-bold text-gray-700 mb-2">5. 후리가나 설정</label>
+            <label class="flex items-center p-3 border rounded-lg bg-gray-50 cursor-pointer hover:bg-gray-100 transition-colors">
+                <input type="checkbox" id="show-furigana-checkbox" class="h-4 w-4 text-indigo-600 rounded focus:ring-indigo-500" checked>
+                <span class="ml-2 text-sm text-gray-700 font-medium">후리가나 보이기</span>
+            </label>
+        </div>
+
+        <button id="start-btn" class="w-full bg-indigo-600 hover:bg-indigo-700 text-white font-bold py-3 rounded-xl transition-transform active:scale-95 shadow-lg">
+            학습 시작
+        </button>
+        <p id="setup-error" class="text-red-500 text-xs mt-2 text-center h-4"></p>
+    </div>
+
+    <div id="play-container" class="hidden w-full max-w-md flex flex-col items-center">
+        
+        <div class="w-full flex justify-between items-center mb-4 px-2">
+            <div class="flex items-center space-x-3">
+                <button id="exit-btn" class="text-gray-400 hover:text-gray-700 font-medium text-sm flex items-center transition-colors">
+                    <span class="text-lg mr-1">✕</span> 종료
+                </button>
+                <button id="mid-share-btn" class="text-gray-400 hover:text-indigo-600 transition-colors p-1" title="저장된 단어 보기 및 관리">
+                    <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="w-5 h-5">
+                        <path stroke-linecap="round" stroke-linejoin="round" d="M7.217 10.907a2.25 2.25 0 1 0 0 2.186m0-2.186c.18.324.283.696.283 1.093s-.103.77-.283 1.093m0-2.186 9.566-5.314m-9.566 7.5 9.566 5.314m0 0a2.25 2.25 0 1 0 3.935 2.186 2.25 2.25 0 0 0-3.935-2.186Zm0-12.814a2.25 2.25 0 1 0 3.933-2.185 2.25 2.25 0 0 0-3.933 2.185Z" />
+                    </svg>
+                </button>
+            </div>
+            <div class="text-sm font-bold text-indigo-600">
+                <span id="current-count">1</span> / <span id="total-count">0</span>
+            </div>
+        </div>
+
+        <div class="perspective-1000 w-full h-96 mb-6 relative group">
+            <div id="card-inner" class="card-inner w-full h-full">
+                
+                <div class="card-face card-front flex flex-col p-6">
+                    <span class="text-gray-400 text-xs uppercase tracking-widest mb-2 absolute top-6">문제</span>
+                    <div id="card-front-content" class="font-bold text-center break-keep leading-snug flex items-center justify-center w-full h-full mt-4 mb-8"></div>
+                    <p class="text-gray-400 text-xs absolute bottom-6 animate-pulse">터치해서 정답 확인</p>
+                </div>
+
+                <div class="card-face card-back flex flex-col p-6">
+                    <button id="bookmark-btn" class="absolute top-4 left-4 text-gray-400 hover:text-red-500 transition-colors p-2 z-20"></button>
+                    <span class="text-indigo-400 text-xs uppercase tracking-widest mb-2 absolute top-6">정답</span>
+                    <div id="card-back-content" class="font-medium text-center break-keep leading-snug flex items-center justify-center w-full h-full mt-4 mb-8"></div>
+                    <button id="dict-btn" class="absolute top-4 right-4 text-gray-400 hover:text-indigo-500 transition-colors p-2 z-20">
+                        <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="w-6 h-6"><path stroke-linecap="round" stroke-linejoin="round" d="m21 21-5.197-5.197m0 0A7.5 7.5 0 1 0 5.196 5.196a7.5 7.5 0 0 0 10.607 10.607Z" /></svg>
+                    </button>
+                    <p class="text-gray-400 text-xs absolute bottom-6 animate-pulse">터치해서 다음 단어</p>
+                </div>
+            </div>
+        </div>
+        
+        <div id="completion-msg" class="hidden text-center mt-4 w-full">
+            <h2 class="text-2xl font-bold text-gray-800 mb-2">학습 완료! 🎉</h2>
+            <p class="text-gray-600 mb-6">선택한 범위의 모든 단어를 확인했습니다.</p>
+            <button id="share-bookmarks-btn" class="w-full bg-red-500 hover:bg-red-600 text-white font-bold py-3 px-4 rounded-lg shadow-md mb-3 transition-colors hidden">❤️ 저장한 단어 공유하기</button>
+            <button onclick="location.reload()" class="w-full bg-gray-800 text-white py-3 rounded-lg font-bold hover:bg-gray-900 transition-colors">처음으로 돌아가기</button>
+        </div>
+    </div>
+
+    <div id="share-modal" class="hidden fixed inset-0 bg-black bg-opacity-50 z-50 flex items-center justify-center p-4 backdrop-blur-sm transition-opacity">
+        <div class="bg-white rounded-2xl shadow-2xl w-full max-w-sm flex flex-col max-h-[80vh]">
+            <div class="p-4 border-b flex justify-between items-center">
+                <h3 class="font-bold text-lg text-gray-800">저장된 단어장</h3>
+                <button id="close-modal-btn" class="text-gray-400 hover:text-gray-600 p-1">
+                    <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" class="w-5 h-5">
+                        <path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12" />
+                    </svg>
+                </button>
+            </div>
+            
+            <div id="share-list-container" class="flex-1 overflow-y-auto p-4 space-y-2"></div>
+
+            <div class="p-4 border-t bg-gray-50">
+                <button id="modal-share-act-btn" class="w-full bg-indigo-600 hover:bg-indigo-700 text-white font-bold py-3 rounded-xl flex items-center justify-center shadow-lg active:scale-95 transition-all">
+                    <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="w-5 h-5 mr-2">
+                        <path stroke-linecap="round" stroke-linejoin="round" d="M7.217 10.907a2.25 2.25 0 1 0 0 2.186m0-2.186c.18.324.283.696.283 1.093s-.103.77-.283 1.093m0-2.186 9.566-5.314m-9.566 7.5 9.566 5.314m0 0a2.25 2.25 0 1 0 3.935 2.186 2.25 2.25 0 0 0-3.935-2.186Zm0-12.814a2.25 2.25 0 1 0 3.933-2.185 2.25 2.25 0 0 0-3.933 2.185Z" />
+                    </svg>
+                    공유하기
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        let allVocabGroups = {};
+        let learningQueue = [];
+        let currentIndex = 0;
+        let currentMode = 'word-to-meaning';
+        let isFlipped = false;
+        let showFurigana = true; 
+
+        const setupContainer = document.getElementById('setup-container');
+        const playContainer = document.getElementById('play-container');
+        const groupCheckboxContainer = document.getElementById('group-checkbox-container');
+        const selectAllGroups = document.getElementById('select-all-groups');
+        const startBtn = document.getElementById('start-btn');
+        const setupError = document.getElementById('setup-error');
+        
+        const cardInner = document.getElementById('card-inner');
+        const cardFrontContent = document.getElementById('card-front-content');
+        const cardBackContent = document.getElementById('card-back-content');
+        
+        const exitBtn = document.getElementById('exit-btn');
+        const dictBtn = document.getElementById('dict-btn');
+        const bookmarkBtn = document.getElementById('bookmark-btn');
+        const currentCountEl = document.getElementById('current-count');
+        const totalCountEl = document.getElementById('total-count');
+        const completionMsg = document.getElementById('completion-msg');
+        const shareBookmarksBtn = document.getElementById('share-bookmarks-btn');
+
+        const countRadios = document.getElementsByName('count-mode');
+        const customCountInput = document.getElementById('custom-count-input');
+        const totalVocaDisplay = document.getElementById('total-voca-display');
+        const orderSequentialLabel = document.getElementById('order-sequential-label');
+        const orderSequentialRadio = document.querySelector('input[value="sequential"]');
+        const orderRandomRadio = document.querySelector('input[value="random"]');
+        const orderWarningMsg = document.getElementById('order-warning-msg');
+        const showFuriganaCheckbox = document.getElementById('show-furigana-checkbox');
+
+        const midShareBtn = document.getElementById('mid-share-btn');
+        const shareModal = document.getElementById('share-modal');
+        const closeModalBtn = document.getElementById('close-modal-btn');
+        const shareListContainer = document.getElementById('share-list-container');
+        const modalShareActBtn = document.getElementById('modal-share-act-btn');
+
+        async function loadVocabulary() {
+            try {
+                const response = await fetch('japanese.voca', { cache: 'no-store' });
+                if (!response.ok) throw new Error('japanese.voca 파일을 찾을 수 없습니다.');
+                const text = await response.text();
+                
+                allVocabGroups = {};
+                let currentGroup = '미분류';
+                
+                text.split('\n').forEach(line => {
+                    line = line.trim();
+                    if (!line || line.startsWith('#')) return;
+                    if (line.startsWith('@')) {
+                        currentGroup = line.substring(1).trim();
+                        if (!allVocabGroups[currentGroup]) allVocabGroups[currentGroup] = [];
+                    } else {
+                        const parts = line.split(' - ');
+                        if (parts.length >= 2) {
+                            const word = parts[0].trim();
+                            const meaning = parts.slice(1).join(' - ').trim();
+                            if (!allVocabGroups[currentGroup]) allVocabGroups[currentGroup] = [];
+                            allVocabGroups[currentGroup].push({ word, meaning, isBookmarked: false });
+                        }
+                    }
+                });
+                renderGroupCheckboxes();
+            } catch (err) {
+                groupCheckboxContainer.innerHTML = `<p class="text-red-500">${err.message}</p>`;
+            }
+        }
+
+        function renderGroupCheckboxes() {
+            groupCheckboxContainer.innerHTML = '';
+            Object.keys(allVocabGroups).forEach(group => {
+                const div = document.createElement('div');
+                div.className = 'flex items-center mb-2';
+                div.innerHTML = `
+                    <input type="checkbox" name="group-select" value="${group}" class="h-4 w-4 text-indigo-600 rounded focus:ring-indigo-500">
+                    <label class="ml-2 text-sm text-gray-700 cursor-pointer select-none flex-1" onclick="this.previousElementSibling.click()">
+                        ${group} <span class="text-gray-400 text-xs">(${allVocabGroups[group].length})</span>
+                    </label>
+                `;
+                groupCheckboxContainer.appendChild(div);
+            });
+
+            document.querySelectorAll('input[name="group-select"]').forEach(cb => {
+                cb.addEventListener('change', updateAvailableCount);
+            });
+            updateAvailableCount();
+        }
+
+        function updateAvailableCount() {
+            const selectedGroups = Array.from(document.querySelectorAll('input[name="group-select"]:checked')).map(cb => cb.value);
+            let totalCount = 0;
+            selectedGroups.forEach(g => totalCount += allVocabGroups[g].length);
+            
+            totalVocaDisplay.textContent = `(총 ${totalCount}개 선택됨)`;
+            customCountInput.max = totalCount;
+            
+            if (customCountInput.value && parseInt(customCountInput.value) > totalCount) {
+                customCountInput.value = totalCount;
+            }
+        }
+
+        customCountInput.addEventListener('input', function() {
+            const max = parseInt(this.max);
+            const val = parseInt(this.value);
+            if (val > max) {
+                this.value = max;
+            }
+        });
+
+        countRadios.forEach(radio => {
+            radio.addEventListener('change', (e) => {
+                if (e.target.value === 'custom') {
+                    customCountInput.disabled = false;
+                    customCountInput.focus();
+                    
+                    orderRandomRadio.checked = true;
+                    orderSequentialRadio.disabled = true;
+                    orderSequentialLabel.classList.add('disabled-option');
+                    orderWarningMsg.classList.remove('hidden');
+                } else {
+                    customCountInput.disabled = true;
+                    customCountInput.value = ''; 
+                    setupError.textContent = ''; 
+                    
+                    orderSequentialRadio.disabled = false;
+                    orderSequentialLabel.classList.remove('disabled-option');
+                    orderWarningMsg.classList.add('hidden');
+                }
+            });
+        });
+
+        customCountInput.addEventListener('input', () => {
+            setupError.textContent = '';
+        });
+
+        function formatFurigana(word) {
+            return word.replace(/([\u4E00-\u9FAF]+)\[([^\]]+)\]/g, '<ruby>$1<rt>$2</rt></ruby>')
+                       .replace(/([^\u4E00-\u9FAF\s]+)\[([^\]]+)\]/g, '<ruby>$1<rt>$2</rt></ruby>');
+        }
+
+        function getDisplayWord(word) {
+            if (showFurigana) {
+                return formatFurigana(word); 
+            } else {
+                return word.replace(/\[[^\]]+\]/g, ''); 
+            }
+        }
+
+        function getRawWord(word) {
+             const match = word.match(/([^\[]*)\[([^\]]+)\]([^\[]*)/);
+             if (match) {
+                const [_, before, inside, after] = match;
+                return /[\u4E00-\u9FAF]/.test(inside) ? (before + inside + after) : (before + after);
+             }
+             return word.replace(/\[[^\]]+\]/g, '').trim();
+        }
+
+        function shuffleArray(array) {
+            const newArray = [...array]; 
+            for (let i = newArray.length - 1; i > 0; i--) {
+                const j = Math.floor(Math.random() * (i + 1));
+                [newArray[i], newArray[j]] = [newArray[j], newArray[i]];
+            }
+            return newArray;
+        }
+
+        // [신규 추가] 글자 수에 따른 폰트 사이즈 클래스 반환
+        function getFontSizeClass(text) {
+            const tempDiv = document.createElement('div');
+            tempDiv.innerHTML = text;
+            const cleanText = tempDiv.textContent || tempDiv.innerText || "";
+            const len = cleanText.length;
+
+            if (len <= 4) {
+                return "text-6xl sm:text-8xl"; 
+            } else if (len <= 8) {
+                return "text-5xl sm:text-7xl"; 
+            } else if (len <= 15) {
+                return "text-3xl sm:text-5xl"; 
+            } else if (len <= 30) {
+                return "text-2xl sm:text-3xl"; 
+            } else {
+                return "text-lg sm:text-xl";   
+            }
+        }
+
+        function startGame() {
+            setupError.textContent = ''; 
+            
+            showFurigana = showFuriganaCheckbox.checked;
+
+            const selectedGroups = Array.from(document.querySelectorAll('input[name="group-select"]:checked')).map(cb => cb.value);
+            if (selectedGroups.length === 0) {
+                setupError.textContent = '최소 1개 이상의 그룹을 선택해주세요.';
+                return;
+            }
+
+            learningQueue = [];
+            selectedGroups.forEach(g => {
+                const groupItems = allVocabGroups[g].map(item => ({ ...item, isBookmarked: false }));
+                learningQueue.push(...groupItems);
+            });
+
+            if (learningQueue.length === 0) {
+                setupError.textContent = '선택한 그룹에 단어가 없습니다.';
+                return;
+            }
+
+            const countMode = document.querySelector('input[name="count-mode"]:checked').value;
+            const orderMode = document.querySelector('input[name="card-order"]:checked').value;
+            const modeRadio = document.querySelector('input[name="card-mode"]:checked');
+            currentMode = modeRadio ? modeRadio.value : 'word-to-meaning';
+
+            if (countMode === 'custom') {
+                let count = parseInt(customCountInput.value);
+                
+                if (isNaN(count) || count < 1) {
+                    setupError.textContent = '올바른 단어 개수를 입력해주세요.';
+                    customCountInput.focus();
+                    return;
+                }
+
+                if (count > learningQueue.length) {
+                    count = learningQueue.length;
+                    customCountInput.value = count;
+                }
+
+                learningQueue = shuffleArray(learningQueue);
+                learningQueue = learningQueue.slice(0, count);
+
+            } else {
+                if (orderMode === 'random') {
+                    learningQueue = shuffleArray(learningQueue);
+                }
+            }
+
+            currentIndex = 0;
+            totalCountEl.textContent = learningQueue.length;
+            setupContainer.classList.add('hidden');
+            playContainer.classList.remove('hidden');
+            
+            renderCard();
+        }
+
+        // [수정됨] 카드 렌더링 로직 (사이즈 동적 적용)
+        function renderCard() {
+            if (currentIndex >= learningQueue.length) {
+                finishGame();
+                return;
+            }
+
+            const item = learningQueue[currentIndex];
+            currentCountEl.textContent = currentIndex + 1;
+            
+            cardInner.style.transition = 'none';
+            cardInner.classList.remove('is-flipped');
+            isFlipped = false;
+            void cardInner.offsetWidth; 
+            cardInner.style.transition = 'transform 0.6s';
+
+            const displayWord = getDisplayWord(item.word);
+            const rawWord = getRawWord(item.word);
+            const meaning = item.meaning;
+
+            let frontContent = "";
+            let backContent = "";
+
+            if (currentMode === 'word-to-meaning') {
+                frontContent = displayWord;
+                backContent = meaning;
+            } else {
+                frontContent = meaning;
+                backContent = displayWord;
+            }
+
+            // 내용 길이 기반 클래스 계산
+            const frontSizeClass = getFontSizeClass(currentMode === 'word-to-meaning' ? rawWord : frontContent);
+            const backSizeClass = getFontSizeClass(currentMode === 'word-to-meaning' ? backContent : rawWord);
+
+            // 클래스 및 내용 적용 (relative 제거됨)
+            cardFrontContent.className = `font-bold text-center break-keep leading-snug flex items-center justify-center w-full h-full mt-4 mb-8 ${frontSizeClass}`;
+            cardBackContent.className = `font-medium text-center break-keep leading-snug flex items-center justify-center w-full h-full mt-4 mb-8 ${backSizeClass}`;
+
+            cardFrontContent.innerHTML = frontContent;
+            cardBackContent.innerHTML = backContent;
+
+            updateBookmarkIcon(item.isBookmarked);
+
+            dictBtn.onclick = (e) => {
+                e.stopPropagation();
+                window.open(`https://ja.dict.naver.com/#/search?query=${encodeURIComponent(rawWord)}`, '_blank');
+            };
+
+            bookmarkBtn.onclick = (e) => {
+                e.stopPropagation();
+                item.isBookmarked = !item.isBookmarked;
+                updateBookmarkIcon(item.isBookmarked);
+            };
+        }
+
+        function updateBookmarkIcon(isSaved) {
+            if (isSaved) {
+                bookmarkBtn.innerHTML = `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" class="w-6 h-6 text-red-500"> <path fill-rule="evenodd" d="M6.32 2.577a49.255 49.255 0 0 1 11.36 0c1.497.174 2.57 1.46 2.57 2.93V21a.75.75 0 0 1-1.085.67L12 18.089l-7.165 3.583A.75.75 0 0 1 3.75 21V5.507c0-1.47 1.073-2.756 2.57-2.93Z" clip-rule="evenodd" /> </svg>`;
+                bookmarkBtn.classList.remove('text-gray-400');
+                bookmarkBtn.classList.add('text-red-500');
+            } else {
+                bookmarkBtn.innerHTML = `<svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="w-6 h-6"> <path stroke-linecap="round" stroke-linejoin="round" d="M17.593 3.322c1.1.128 1.907 1.077 1.907 2.185V21L12 17.25 4.5 21V5.507c0-1.108.806-2.057 1.907-2.185a48.208 48.208 0 0 1 11.186 0Z" /> </svg>`;
+                bookmarkBtn.classList.add('text-gray-400');
+                bookmarkBtn.classList.remove('text-red-500');
+            }
+        }
+
+        function flipCard() {
+            if (isFlipped) return;
+            isFlipped = true;
+            cardInner.classList.add('is-flipped');
+        }
+
+        function nextCard() {
+            currentIndex++;
+            renderCard();
+        }
+
+        function finishGame() {
+            document.querySelector('.perspective-1000').classList.add('hidden');
+            document.querySelector('#play-container > div.flex.justify-between').classList.add('hidden');
+            completionMsg.classList.remove('hidden');
+
+            const savedItems = learningQueue.filter(item => item.isBookmarked);
+            if (savedItems.length > 0) {
+                shareBookmarksBtn.classList.remove('hidden');
+                shareBookmarksBtn.textContent = `❤️ 저장한 단어 (${savedItems.length}개) 공유하기`;
+            } else {
+                shareBookmarksBtn.classList.add('hidden');
+            }
+        }
+
+        async function executeShare(btnElement) {
+            const savedItems = learningQueue.filter(item => item.isBookmarked);
+            if (savedItems.length === 0) {
+                alert("저장된 단어가 없습니다.");
+                return;
+            }
+
+            let shareText = `[일본어 단어장 - 저장된 단어]\n\n`;
+            savedItems.forEach(item => {
+                const cleanWord = item.word.replace(/\[[^\]]+\]/g, '');
+                shareText += `${cleanWord} - ${item.meaning}\n`;
+            });
+
+            try {
+                if (navigator.share) {
+                    await navigator.share({ title: '저장된 단어장', text: shareText });
+                } else {
+                    throw new Error('Web Share API not supported');
+                }
+            } catch (err) {
+                try {
+                    await navigator.clipboard.writeText(shareText);
+                    const originalText = btnElement.innerHTML;
+                    btnElement.innerHTML = '✅ 복사됨!';
+                    setTimeout(() => btnElement.innerHTML = originalText, 2000);
+                } catch (copyErr) {
+                    alert('공유/복사 실패');
+                }
+            }
+        }
+
+        function renderShareList() {
+            const savedItems = learningQueue.filter(item => item.isBookmarked);
+            
+            shareListContainer.innerHTML = '';
+            
+            if (savedItems.length === 0) {
+                shareListContainer.innerHTML = `
+                    <div class="flex flex-col items-center justify-center h-32 text-gray-400">
+                        <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="w-8 h-8 mb-2">
+                            <path stroke-linecap="round" stroke-linejoin="round" d="M17.593 3.322c1.1.128 1.907 1.077 1.907 2.185V21L12 17.25 4.5 21V5.507c0-1.108.806-2.057 1.907-2.185a48.208 48.208 0 0 1 11.186 0Z" />
+                        </svg>
+                        <p class="text-sm">저장된 단어가 없습니다.</p>
+                    </div>
+                `;
+                modalShareActBtn.disabled = true;
+                modalShareActBtn.classList.add('bg-gray-300', 'cursor-not-allowed');
+                modalShareActBtn.classList.remove('bg-indigo-600', 'hover:bg-indigo-700');
+            } else {
+                modalShareActBtn.disabled = false;
+                modalShareActBtn.classList.remove('bg-gray-300', 'cursor-not-allowed');
+                modalShareActBtn.classList.add('bg-indigo-600', 'hover:bg-indigo-700');
+
+                savedItems.forEach(item => {
+                    const div = document.createElement('div');
+                    div.className = 'p-3 bg-gray-50 rounded-lg border border-gray-100 flex items-center justify-between group hover:border-indigo-200 transition-colors';
+                    
+                    const textDiv = document.createElement('div');
+                    textDiv.className = 'flex-1 flex justify-between items-center mr-3';
+                    
+                    textDiv.innerHTML = `
+                        <div class="font-medium text-gray-800">${getDisplayWord(item.word)}</div>
+                        <div class="text-sm text-gray-500 ml-4 text-right">${item.meaning}</div>
+                    `;
+
+                    const deleteBtn = document.createElement('button');
+                    deleteBtn.className = 'text-gray-300 hover:text-red-500 p-1 rounded-full hover:bg-red-50 transition-all';
+                    deleteBtn.innerHTML = `
+                        <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" class="w-5 h-5">
+                            <path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12" />
+                        </svg>
+                    `;
+                    
+                    deleteBtn.onclick = () => {
+                        item.isBookmarked = false;
+                        renderShareList();
+                        if (learningQueue[currentIndex] === item) {
+                            updateBookmarkIcon(false);
+                        }
+                    };
+
+                    div.appendChild(textDiv);
+                    div.appendChild(deleteBtn);
+                    shareListContainer.appendChild(div);
+                });
+            }
+        }
+
+        midShareBtn.addEventListener('click', () => {
+            renderShareList();
+            shareModal.classList.remove('hidden');
+        });
+
+        closeModalBtn.addEventListener('click', () => {
+            shareModal.classList.add('hidden');
+        });
+        
+        shareModal.addEventListener('click', (e) => {
+            if (e.target === shareModal) shareModal.classList.add('hidden');
+        });
+
+        modalShareActBtn.addEventListener('click', () => executeShare(modalShareActBtn));
+
+        document.addEventListener('DOMContentLoaded', loadVocabulary);
+        selectAllGroups.addEventListener('change', (e) => {
+            document.querySelectorAll('input[name="group-select"]').forEach(cb => cb.checked = e.target.checked);
+            updateAvailableCount();
+        });
+        startBtn.addEventListener('click', startGame);
+
+        cardInner.addEventListener('click', () => {
+            if (!isFlipped) {
+                flipCard(); 
+            } else {
+                nextCard(); 
+            }
+        });
+
+        shareBookmarksBtn.addEventListener('click', () => executeShare(shareBookmarksBtn));
+
+        document.addEventListener('keydown', (e) => {
+            if (playContainer.classList.contains('hidden')) return;
+            if (!shareModal.classList.contains('hidden')) return; 
+
+            if (e.code === 'Space' || e.code === 'Enter') {
+                e.preventDefault();
+                if (!isFlipped) flipCard();
+                else nextCard();
+            }
+        });
+
+        exitBtn.addEventListener('click', () => location.reload());
+
+    </script>
+</body>
+</html>

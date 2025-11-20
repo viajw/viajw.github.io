@@ -1,0 +1,626 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>일본어 단어 퀴즈</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/static/pretendard.min.css" />
+    <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+JP:wght@400;500;700&display=swap" rel="stylesheet">
+    
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    fontFamily: {
+                        sans: ['Pretendard', 'Noto Sans JP', '-apple-system', 'BlinkMacSystemFont', 'Segoe UI', 'Roboto', 'Helvetica Neue', 'Arial', 'sans-serif'],
+                    },
+                },
+            },
+        }
+    </script>
+    
+    <style>
+        /* 후리가나 스타일 */
+        ruby rt {
+            font-size: 0.6em; 
+            user-select: none; 
+            color: #6b7280; 
+            transition: opacity 0.2s;
+        }
+
+        /* 후리가나 숨김 클래스 */
+        .no-furigana ruby rt {
+            display: none;
+        }
+        
+        /* 팝업 말풍선 */
+        .info-popup {
+            position: absolute;
+            bottom: 110%; 
+            right: 0;
+            background-color: #1f2937; 
+            color: white;
+            padding: 8px 12px;
+            border-radius: 8px;
+            font-size: 0.9rem;
+            width: max-content;
+            max-width: 220px;
+            z-index: 50;
+            box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1);
+            margin-bottom: 4px;
+            display: none; 
+            word-wrap: break-word;
+            white-space: pre-wrap;
+            text-align: left;
+        }
+        
+        .info-popup::after {
+            content: "";
+            position: absolute;
+            top: 100%;
+            right: 10px; 
+            border-width: 6px;
+            border-style: solid;
+            border-color: #1f2937 transparent transparent transparent;
+        }
+
+        .info-popup.show {
+            display: block;
+            animation: fadeIn 0.2s ease-out;
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(5px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+        
+        /* 버튼 등장 애니메이션 */
+        .fade-in-btn {
+            animation: fadeInBtn 0.3s ease-out forwards;
+            opacity: 0;
+        }
+        
+        @keyframes fadeInBtn {
+            to { opacity: 1; }
+        }
+    </style>
+</head>
+<body class="bg-gray-100 flex items-center justify-center min-h-screen font-sans">
+
+    <div class="container mx-auto max-w-2xl w-full p-4 sm:p-6">
+        
+        <div id="setup-view" class="bg-white rounded-2xl shadow-xl p-6 sm:p-8">
+            <h1 class="text-3xl font-bold text-gray-800 mb-8 text-center">
+                단어 퀴즈
+            </h1>
+            
+            <div class="mb-8">
+                <h2 class="text-lg font-bold text-gray-700 mb-3">1. 출제 범위 선택</h2>
+                <div class="border rounded-lg p-4 max-h-48 overflow-y-auto bg-gray-50">
+                    <div class="flex items-center mb-3 pb-3 border-b">
+                        <input type="checkbox" id="select-all-groups" class="h-5 w-5 text-indigo-600 border-gray-300 rounded focus:ring-indigo-500">
+                        <label for="select-all-groups" class="ml-3 block text-base font-semibold text-gray-900">
+                            전체 선택
+                        </label>
+                    </div>
+                    <div id="group-checkbox-container">
+                        <p class="text-gray-500">단어장 파일을 불러오는 중...</p>
+                    </div>
+                </div>
+            </div>
+
+            <div class="mb-8">
+                <h2 class="text-lg font-bold text-gray-700 mb-3">2. 문제 유형 선택</h2>
+                <div class="grid grid-cols-2 gap-4">
+                    <label class="border rounded-lg p-4 flex items-center cursor-pointer hover:bg-indigo-50 transition-colors has-[:checked]:border-indigo-500 has-[:checked]:bg-indigo-50 ring-offset-2">
+                        <input type="radio" name="quiz-mode" value="word-to-meaning" class="h-5 w-5 text-indigo-600 focus:ring-indigo-500" checked>
+                        <div class="ml-3">
+                            <span class="block text-base font-bold text-gray-900">단어 → 뜻</span>
+                            <span class="block text-sm text-gray-500">일본어를 보고 뜻 맞추기</span>
+                        </div>
+                    </label>
+                    <label class="border rounded-lg p-4 flex items-center cursor-pointer hover:bg-indigo-50 transition-colors has-[:checked]:border-indigo-500 has-[:checked]:bg-indigo-50 ring-offset-2">
+                        <input type="radio" name="quiz-mode" value="meaning-to-word" class="h-5 w-5 text-indigo-600 focus:ring-indigo-500">
+                        <div class="ml-3">
+                            <span class="block text-base font-bold text-gray-900">뜻 → 단어</span>
+                            <span class="block text-sm text-gray-500">뜻을 보고 일본어 맞추기</span>
+                        </div>
+                    </label>
+                </div>
+            </div>
+            
+            <button id="start-quiz-btn" class="w-full bg-indigo-600 hover:bg-indigo-700 text-white font-bold py-4 px-4 rounded-xl transition-all duration-200 shadow-lg text-lg">
+                퀴즈 시작하기
+            </button>
+            <p id="setup-error" class="text-red-500 text-sm mt-3 text-center"></p>
+        </div>
+
+        <div id="quiz-view" class="bg-white rounded-2xl shadow-xl p-6 sm:p-8 hidden flex flex-col min-h-[600px]">
+            
+            <div class="flex flex-col sm:flex-row justify-between items-center mb-6 pb-4 border-b gap-4">
+                <div class="flex gap-4 text-sm font-semibold self-start sm:self-center">
+                    <span class="text-green-600">정답: <span id="score-correct">0</span></span>
+                    <span class="text-red-500">오답: <span id="score-wrong">0</span></span>
+                </div>
+                
+                <div class="flex items-center gap-3 self-end sm:self-center">
+                    <label class="flex items-center space-x-2 cursor-pointer text-sm text-gray-600 select-none hover:bg-gray-100 px-2 py-1 rounded transition-colors">
+                        <input type="checkbox" id="toggle-furigana-btn" class="form-checkbox h-4 w-4 text-indigo-600 rounded focus:ring-indigo-500" checked>
+                        <span class="font-medium">후리가나</span>
+                    </label>
+
+                    <button id="finish-early-btn" class="text-sm bg-gray-200 hover:bg-gray-300 text-gray-700 font-semibold py-1 px-3 rounded transition-colors">
+                        결과 보기
+                    </button>
+                </div>
+            </div>
+
+            <div class="flex-grow flex flex-col items-center justify-center mb-8">
+                <div id="question-text" class="text-4xl sm:text-5xl font-bold text-gray-800 text-center break-keep leading-tight flex items-center justify-center flex-wrap gap-2 transition-all duration-200">
+                </div>
+            </div>
+
+            <div id="options-container" class="space-y-3 mb-6">
+            </div>
+
+            <button id="next-question-btn" class="w-full bg-indigo-600 hover:bg-indigo-700 text-white font-bold py-3 px-4 rounded-lg shadow-md hidden">
+                다음 문제 →
+            </button>
+        </div>
+
+        <div id="result-view" class="bg-white rounded-2xl shadow-xl p-6 sm:p-8 hidden">
+            <h1 class="text-3xl font-bold text-gray-800 mb-6 text-center">
+                퀴즈 결과
+            </h1>
+
+            <div class="flex justify-center gap-8 mb-8 bg-gray-50 p-6 rounded-xl">
+                <div class="text-center">
+                    <p class="text-sm text-gray-500 mb-1">맞은 문제</p>
+                    <p class="text-3xl font-bold text-green-600" id="final-correct">0</p>
+                </div>
+                <div class="w-px bg-gray-300"></div>
+                <div class="text-center">
+                    <p class="text-sm text-gray-500 mb-1">틀린 문제</p>
+                    <p class="text-3xl font-bold text-red-500" id="final-wrong">0</p>
+                </div>
+            </div>
+
+            <div id="wrong-list-container" class="mb-6 hidden">
+                <h3 class="text-lg font-bold text-gray-700 mb-3">오답 노트 (틀린 단어)</h3>
+                <div class="border rounded-lg p-4 bg-red-50 max-h-60 overflow-y-auto text-sm text-gray-800 leading-relaxed" id="wrong-list-text">
+                </div>
+            </div>
+
+            <div class="flex gap-3 mt-6">
+                
+                <button id="resume-btn" class="flex-1 flex flex-col items-center justify-center p-3 bg-blue-500 hover:bg-blue-600 text-white rounded-xl shadow-md transition-all duration-200 group">
+                    <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="w-8 h-8 mb-1 group-hover:scale-110 transition-transform">
+                        <path stroke-linecap="round" stroke-linejoin="round" d="M5.25 5.653c0-.856.917-1.398 1.667-.986l11.54 6.348a1.125 1.125 0 0 1 0 1.971l-11.54 6.347a1.125 1.125 0 0 1-1.667-.985V5.653Z" />
+                    </svg>
+                    <span class="text-xs font-bold">계속 풀기</span>
+                </button>
+
+                <button id="share-wrong-btn" class="flex-1 flex flex-col items-center justify-center p-3 bg-red-500 hover:bg-red-600 text-white rounded-xl shadow-md transition-all duration-200 group hidden">
+                    <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="w-8 h-8 mb-1 group-hover:scale-110 transition-transform">
+                        <path stroke-linecap="round" stroke-linejoin="round" d="M7.217 10.907a2.25 2.25 0 1 0 0 2.186m0-2.186c.18.324.287.696.287 1.093s-.107.77-.287 1.093m0-2.186 9.566-5.314m-9.566 7.5 9.566 5.314m0 0a2.25 2.25 0 1 0 3.935 2.186 2.25 2.25 0 0 0-3.935-2.186Zm0-12.814a2.25 2.25 0 1 0 3.933-2.185 2.25 2.25 0 0 0-3.933 2.185Z" />
+                    </svg>
+                    <span class="text-xs font-bold">오답 공유</span>
+                </button>
+
+                <button id="restart-btn" class="flex-1 flex flex-col items-center justify-center p-3 bg-gray-600 hover:bg-gray-700 text-white rounded-xl shadow-md transition-all duration-200 group">
+                    <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="w-8 h-8 mb-1 group-hover:scale-110 transition-transform">
+                        <path stroke-linecap="round" stroke-linejoin="round" d="m2.25 12 8.954-8.955c.44-.439 1.152-.439 1.591 0L21.75 12M4.5 9.75v10.125c0 .621.504 1.125 1.125 1.125H9.75v-4.875c0-.621.504-1.125 1.125-1.125h2.25c.621 0 1.125.504 1.125 1.125V21h4.125c.621 0 1.125-.504 1.125-1.125V9.75M8.25 21h8.25" />
+                    </svg>
+                    <span class="text-xs font-bold">처음으로</span>
+                </button>
+            </div>
+        </div>
+
+    </div>
+
+    <script>
+        // --- 전역 변수 ---
+        let allVocabGroups = {}; 
+        let quizList = []; 
+        let currentQuestion = null;
+        let correctCount = 0;
+        let wrongCount = 0;
+        let wrongAnswersList = []; 
+        let isMeaningToWord = false; 
+
+        // DOM 요소
+        const setupView = document.getElementById('setup-view');
+        const quizView = document.getElementById('quiz-view');
+        const resultView = document.getElementById('result-view');
+        
+        const groupCheckboxContainer = document.getElementById('group-checkbox-container');
+        const selectAllGroups = document.getElementById('select-all-groups');
+        const setupError = document.getElementById('setup-error');
+        const startQuizBtn = document.getElementById('start-quiz-btn');
+
+        const scoreCorrectEl = document.getElementById('score-correct');
+        const scoreWrongEl = document.getElementById('score-wrong');
+        const questionTextEl = document.getElementById('question-text');
+        const optionsContainer = document.getElementById('options-container');
+        const nextQuestionBtn = document.getElementById('next-question-btn');
+        const finishEarlyBtn = document.getElementById('finish-early-btn');
+        
+        const toggleFuriganaBtn = document.getElementById('toggle-furigana-btn'); 
+
+        const finalCorrectEl = document.getElementById('final-correct');
+        const finalWrongEl = document.getElementById('final-wrong');
+        const wrongListContainer = document.getElementById('wrong-list-container');
+        const wrongListText = document.getElementById('wrong-list-text');
+        
+        const shareWrongBtn = document.getElementById('share-wrong-btn');
+        const resumeBtn = document.getElementById('resume-btn');
+        const restartBtn = document.getElementById('restart-btn');
+
+
+        // --- 1. 데이터 로드 ---
+        async function loadVocabulary() {
+            try {
+                const response = await fetch('japanese.voca', { cache: 'no-store' });
+                if (!response.ok) throw new Error('japanese.voca 파일을 불러올 수 없습니다.');
+                const text = await response.text();
+                
+                allVocabGroups = {};
+                let currentGroup = '미분류';
+                
+                text.split('\n').forEach(line => {
+                    line = line.trim();
+                    if (line.length === 0 || line.startsWith('#')) return;
+
+                    if (line.startsWith('@')) {
+                        currentGroup = line.substring(1).trim();
+                        if (!allVocabGroups[currentGroup]) allVocabGroups[currentGroup] = [];
+                    } else {
+                        const parts = line.split(' - ');
+                        if (parts.length >= 2) {
+                            const word = parts[0].trim();
+                            const meaning = parts.slice(1).join(' - ').trim();
+                            if (!allVocabGroups[currentGroup]) allVocabGroups[currentGroup] = [];
+                            allVocabGroups[currentGroup].push({ word, meaning, group: currentGroup });
+                        }
+                    }
+                });
+                
+                displayGroupCheckboxes();
+            } catch (error) {
+                console.error(error);
+                groupCheckboxContainer.innerHTML = `<p class="text-red-500">파일 로드 실패: ${error.message}</p>`;
+            }
+        }
+
+        function displayGroupCheckboxes() {
+            groupCheckboxContainer.innerHTML = '';
+            const groupNames = Object.keys(allVocabGroups);
+
+            if (groupNames.length === 0) {
+                groupCheckboxContainer.innerHTML = '<p class="text-gray-500">불러올 그룹이 없습니다.</p>';
+                return;
+            }
+
+            groupNames.forEach(groupName => {
+                const div = document.createElement('div');
+                div.className = 'flex items-center mb-2';
+                div.innerHTML = `
+                    <input type="checkbox" id="group-${groupName}" name="group-select" value="${groupName}" class="h-4 w-4 text-indigo-600 border-gray-300 rounded focus:ring-indigo-500">
+                    <label for="group-${groupName}" class="ml-3 block text-sm text-gray-700">${groupName} (${allVocabGroups[groupName].length}개)</label>
+                `;
+                groupCheckboxContainer.appendChild(div);
+            });
+        }
+
+        // --- 2. 퀴즈 시작 로직 ---
+        function startQuiz() {
+            const selectedCheckboxes = document.querySelectorAll('input[name="group-select"]:checked');
+            if (selectedCheckboxes.length === 0) {
+                setupError.textContent = '최소 1개 이상의 범위를 선택해주세요.';
+                return;
+            }
+
+            const modeRadio = document.querySelector('input[name="quiz-mode"]:checked');
+            isMeaningToWord = (modeRadio.value === 'meaning-to-word');
+
+            quizList = [];
+            selectedCheckboxes.forEach(cb => {
+                quizList.push(...allVocabGroups[cb.value]);
+            });
+
+            if (quizList.length < 5) {
+                setupError.textContent = '단어가 너무 적습니다. (최소 5개 이상 필요)';
+                return;
+            }
+
+            correctCount = 0;
+            wrongCount = 0;
+            wrongAnswersList = [];
+            updateScoreBoard();
+            setupError.textContent = '';
+            
+            updateFuriganaVisibility();
+
+            setupView.classList.add('hidden');
+            quizView.classList.remove('hidden');
+            resultView.classList.add('hidden');
+
+            loadNextQuestion();
+        }
+
+        // --- 3. 문제 출제 로직 ---
+        function loadNextQuestion() {
+            nextQuestionBtn.classList.add('hidden'); 
+            optionsContainer.innerHTML = ''; 
+
+            const randomIndex = Math.floor(Math.random() * quizList.length);
+            currentQuestion = quizList[randomIndex];
+
+            let distractors = [];
+            while (distractors.length < 4) {
+                const r = Math.floor(Math.random() * quizList.length);
+                if (r !== randomIndex && !distractors.includes(quizList[r])) {
+                    distractors.push(quizList[r]);
+                }
+            }
+
+            const options = [currentQuestion, ...distractors];
+            options.sort(() => Math.random() - 0.5);
+
+            renderQuizUI(currentQuestion, options);
+        }
+
+        function formatFurigana(word) {
+            return word.replace(/([\u4E00-\u9FAF]+)\[([^\]]+)\]/g, (match, kanji, furigana) => {
+                return `<ruby>${kanji}<rt>${furigana}</rt></ruby>`;
+            }).replace(/([^\u4E00-\u9FAF\s]+)\[([^\]]+)\]/g, (match, text, furigana) => {
+                 return `<ruby>${text}<rt>${furigana}</rt></ruby>`;
+            });
+        }
+
+        function openNaverDictionary(word) {
+            let searchTerm = word;
+            const furiganaMatch = word.match(/([^\[]*)\[([^\]]+)\]([^\[]*)/);
+            if (furiganaMatch) {
+                const before = furiganaMatch[1];
+                const inside = furiganaMatch[2];
+                const after = furiganaMatch[3];
+                const hasKanjiInside = /[\u4E00-\u9FAF]/.test(inside);
+                if (hasKanjiInside) {
+                    searchTerm = before + inside + after;
+                } else {
+                    searchTerm = before + after;
+                }
+            }
+            searchTerm = searchTerm.replace(/\[[^\]]+\]/g, '').trim();
+            if (searchTerm) {
+                const url = `https://ja.dict.naver.com/#/search?query=${encodeURIComponent(searchTerm)}`;
+                window.open(url, '_blank');
+            }
+        }
+
+        function renderQuizUI(questionItem, options) {
+            if (isMeaningToWord) {
+                // 뜻 -> 단어
+                questionTextEl.textContent = questionItem.meaning;
+                questionTextEl.classList.remove('text-5xl');
+                questionTextEl.classList.add('text-4xl'); 
+            } else {
+                // 단어 -> 뜻
+                questionTextEl.innerHTML = `<span>${formatFurigana(questionItem.word)}</span>`;
+                questionTextEl.classList.remove('text-4xl');
+                questionTextEl.classList.add('text-5xl'); 
+            }
+
+            options.forEach(opt => {
+                let optionText = '';
+                let infoText = '';
+
+                if (isMeaningToWord) {
+                    optionText = formatFurigana(opt.word);
+                    infoText = opt.meaning;
+                } else {
+                    optionText = opt.meaning;
+                    infoText = formatFurigana(opt.word);
+                }
+
+                const container = document.createElement('div');
+                container.className = 'relative w-full';
+
+                const btn = document.createElement('button');
+                // [수정됨] p-4 -> py-4 pl-10 pr-4 로 변경하여 왼쪽 여백을 늘림 (글자가 오른쪽으로 이동)
+                btn.className = 'w-full text-left py-4 pl-10 pr-4 rounded-xl border-2 border-gray-200 hover:border-indigo-400 hover:bg-indigo-50 transition-all duration-200 text-lg font-medium text-gray-700 flex items-center group option-btn';
+                btn.innerHTML = `<span class="flex-grow">${optionText}</span>`;
+                
+                if (opt === questionItem) {
+                    btn.dataset.correct = "true";
+                }
+
+                btn.onclick = () => checkAnswer(opt, questionItem, btn, container);
+
+                const infoBtn = document.createElement('button');
+                infoBtn.className = 'hidden absolute right-2 top-1/2 transform -translate-y-1/2 p-2 text-gray-400 hover:text-indigo-600 transition-colors z-10';
+                infoBtn.title = "상세 정보 보기";
+                infoBtn.innerHTML = `
+                    <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="w-6 h-6">
+                        <path stroke-linecap="round" stroke-linejoin="round" d="M12 6.042A8.967 8.967 0 0 0 6 3.75c-1.052 0-2.062.18-3 .512v14.25A8.987 8.987 0 0 1 6 18c2.305 0 4.408.867 6 2.292m0-14.25a8.966 8.966 0 0 1 6-2.292c1.052 0 2.062.18 3 .512v14.25A8.987 8.987 0 0 0 18 18a8.967 8.967 0 0 0-6 2.292m0-14.25v14.25" />
+                    </svg>
+                `;
+                
+                const popup = document.createElement('div');
+                popup.className = 'info-popup';
+                popup.innerHTML = infoText;
+
+                infoBtn.onclick = (e) => {
+                    e.stopPropagation();
+                    document.querySelectorAll('.info-popup').forEach(p => {
+                        if(p !== popup) p.classList.remove('show');
+                    });
+                    popup.classList.toggle('show');
+                };
+
+                container.appendChild(btn);
+                container.appendChild(infoBtn);
+                container.appendChild(popup);
+                optionsContainer.appendChild(container);
+            });
+        }
+
+        // --- 4. 정답 확인 로직 ---
+        function checkAnswer(selectedOpt, correctOpt, btnElement, containerElement) {
+            if (document.querySelector('.option-btn[disabled]')) return; 
+
+            const isCorrect = (selectedOpt === correctOpt);
+            const allButtons = document.querySelectorAll('.option-btn');
+            
+            allButtons.forEach(b => {
+                b.disabled = true;
+                b.classList.remove('hover:border-indigo-400', 'hover:bg-indigo-50');
+                b.classList.add('cursor-default', 'opacity-80');
+            });
+
+            if (isCorrect) {
+                btnElement.classList.add('bg-green-100', 'border-green-500', 'text-green-800');
+                btnElement.classList.remove('opacity-80');
+                correctCount++;
+            } else {
+                btnElement.classList.add('bg-red-100', 'border-red-500', 'text-red-800');
+                btnElement.classList.remove('opacity-80');
+                wrongCount++;
+                wrongAnswersList.push(correctOpt);
+            }
+            
+            document.querySelectorAll('#options-container .relative').forEach(rel => {
+                const infoBtn = rel.querySelector('button:nth-child(2)'); 
+                if (infoBtn) {
+                    infoBtn.classList.remove('hidden');
+                    infoBtn.classList.add('flex', 'fade-in-btn'); 
+                }
+                
+                const optBtn = rel.querySelector('.option-btn');
+                if (optBtn.dataset.correct === "true" && !isCorrect) {
+                     optBtn.classList.add('border-green-500', 'bg-green-50');
+                }
+            });
+
+            if (!isMeaningToWord) {
+                if (!document.getElementById('question-dict-btn')) {
+                    const dictBtn = document.createElement('button');
+                    dictBtn.id = 'question-dict-btn';
+                    dictBtn.className = 'ml-2 text-gray-400 hover:text-blue-500 transition-colors duration-200 align-middle fade-in-btn';
+                    dictBtn.title = '네이버 사전 검색';
+                    dictBtn.innerHTML = `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" class="w-8 h-8"> <path fill-rule="evenodd" d="M4.25 5.5a.75.75 0 0 0-.75.75v8.5c0 .414.336.75.75.75h8.5a.75.75 0 0 0 .75-.75v-4a.75.75 0 0 1 1.5 0v4A2.25 2.25 0 0 1 12.75 17H4.25A2.25 2.25 0 0 1 2 14.75v-8.5A2.25 2.25 0 0 1 4.25 4h5a.75.75 0 0 1 0 1.5h-5Z" clip-rule="evenodd" /> <path fill-rule="evenodd" d="M6.19 14.25a.75.75 0 1 1-1.06-1.06L13.94 4.44a.75.75 0 0 1 1.06 0l.75.75a.75.75 0 0 1 0 1.06L6.19 14.25Z" clip-rule="evenodd" /> </svg>`;
+                    
+                    dictBtn.onclick = (e) => {
+                        e.stopPropagation();
+                        openNaverDictionary(correctOpt.word);
+                    };
+                    
+                    questionTextEl.appendChild(dictBtn);
+                }
+            }
+
+            updateScoreBoard();
+            nextQuestionBtn.classList.remove('hidden');
+        }
+
+
+        function updateScoreBoard() {
+            scoreCorrectEl.textContent = correctCount;
+            scoreWrongEl.textContent = wrongCount;
+        }
+
+        // --- 5. 결과 및 공유 로직 ---
+        function finishQuiz() {
+            quizView.classList.add('hidden');
+            resultView.classList.remove('hidden');
+
+            finalCorrectEl.textContent = correctCount;
+            finalWrongEl.textContent = wrongCount;
+
+            wrongListText.innerHTML = '';
+            if (wrongAnswersList.length > 0) {
+                wrongListContainer.classList.remove('hidden');
+                shareWrongBtn.classList.remove('hidden'); 
+                shareWrongBtn.parentElement.classList.remove('hidden');
+                
+                const uniqueWrongs = [...new Set(wrongAnswersList)];
+                uniqueWrongs.forEach(item => {
+                    const div = document.createElement('div');
+                    div.className = "mb-2 border-b border-red-100 last:border-0 pb-1";
+                    div.innerHTML = `${formatFurigana(item.word)} - ${item.meaning}`;
+                    wrongListText.appendChild(div);
+                });
+            } else {
+                wrongListContainer.classList.add('hidden');
+                shareWrongBtn.classList.add('hidden'); 
+            }
+        }
+
+        async function shareWrongAnswers() {
+            if (wrongAnswersList.length === 0) return;
+
+            const uniqueWrongs = [...new Set(wrongAnswersList)];
+            let shareText = `[일본어 퀴즈 오답 노트]\n`;
+            shareText += `점수: 정답 ${correctCount} / 오답 ${wrongCount}\n\n`;
+
+            uniqueWrongs.forEach(item => {
+                shareText += `${item.word} - ${item.meaning}\n`;
+            });
+
+            try {
+                if (navigator.share) {
+                    await navigator.share({
+                        title: '오답 노트',
+                        text: shareText,
+                    });
+                } else {
+                    throw new Error('Web Share not supported');
+                }
+            } catch (err) {
+                try {
+                    await navigator.clipboard.writeText(shareText);
+                    alert('오답 노트가 클립보드에 복사되었습니다!');
+                } catch (copyErr) {
+                    alert('공유/복사 실패');
+                }
+            }
+        }
+        
+        function updateFuriganaVisibility() {
+            if (toggleFuriganaBtn.checked) {
+                quizView.classList.remove('no-furigana');
+            } else {
+                quizView.classList.add('no-furigana');
+            }
+        }
+
+        // --- 이벤트 리스너 ---
+        selectAllGroups.addEventListener('change', (e) => {
+            document.querySelectorAll('input[name="group-select"]').forEach(cb => cb.checked = e.target.checked);
+        });
+
+        startQuizBtn.addEventListener('click', startQuiz);
+        nextQuestionBtn.addEventListener('click', loadNextQuestion);
+        finishEarlyBtn.addEventListener('click', finishQuiz);
+        shareWrongBtn.addEventListener('click', shareWrongAnswers);
+        
+        resumeBtn.addEventListener('click', () => {
+            resultView.classList.add('hidden');
+            quizView.classList.remove('hidden');
+        });
+
+        restartBtn.addEventListener('click', () => {
+            resultView.classList.add('hidden');
+            setupView.classList.remove('hidden');
+        });
+        
+        toggleFuriganaBtn.addEventListener('change', updateFuriganaVisibility);
+
+        // 초기 로드
+        document.addEventListener('DOMContentLoaded', loadVocabulary);
+
+    </script>
+</body>
+</html>
