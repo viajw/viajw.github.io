@@ -1,0 +1,626 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>일본어 로마자 읽기 퀴즈</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/static/pretendard.min.css" />
+    <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+JP:wght@400;500;700&display=swap" rel="stylesheet">
+    
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    fontFamily: {
+                        sans: ['Pretendard', 'Noto Sans JP', 'sans-serif'],
+                    },
+                },
+            },
+        }
+    </script>
+    
+    <style>
+        ruby rt { font-size: 0.6em; user-select: none; color: #6b7280; }
+        
+        .fade-in { animation: fadeIn 0.3s ease-out forwards; }
+        @keyframes fadeIn { from { opacity: 0; transform: translateY(5px); } to { opacity: 1; transform: translateY(0); } }
+
+        .shake { animation: shake 0.4s cubic-bezier(.36,.07,.19,.97) both; }
+        @keyframes shake {
+            10%, 90% { transform: translate3d(-1px, 0, 0); }
+            20%, 80% { transform: translate3d(2px, 0, 0); }
+            30%, 50%, 70% { transform: translate3d(-4px, 0, 0); }
+            40%, 60% { transform: translate3d(4px, 0, 0); }
+        }
+        
+        #romaji-input::placeholder {
+            font-family: 'Pretendard', 'Noto Sans JP', 'sans-serif';
+            color: #9ca3af; 
+        }
+    </style>
+</head>
+<body class="bg-gray-100 flex items-center justify-center min-h-screen font-sans">
+
+    <div class="container mx-auto max-w-2xl w-full p-4 sm:p-6">
+        
+        <div id="setup-view" class="bg-white rounded-2xl shadow-xl p-6 sm:p-8">
+            <h1 class="text-3xl font-bold text-gray-800 mb-2 text-center">로마자 읽기 퀴즈</h1>
+            <p class="text-center text-gray-500 mb-8 text-sm">제시된 일본어의 발음을 로마자로 입력하세요.</p>
+            
+            <div class="mb-8">
+                <h2 class="text-lg font-bold text-gray-700 mb-3">출제 범위 선택</h2>
+                <div class="border rounded-lg p-4 max-h-64 overflow-y-auto bg-gray-50">
+                    <div class="flex items-center mb-3 pb-3 border-b">
+                        <input type="checkbox" id="select-all-groups" class="h-5 w-5 text-indigo-600 border-gray-300 rounded focus:ring-indigo-500">
+                        <label for="select-all-groups" class="ml-3 block text-base font-semibold text-gray-900">전체 선택</label>
+                    </div>
+                    <div id="group-checkbox-container">
+                        <p class="text-gray-500">romaji_reading.voca 파일을 불러오는 중...</p>
+                    </div>
+                </div>
+            </div>
+
+            <button id="start-quiz-btn" class="w-full bg-indigo-600 hover:bg-indigo-700 text-white font-bold py-4 px-4 rounded-xl transition-all duration-200 shadow-lg text-lg">
+                퀴즈 시작하기
+            </button>
+            <p id="setup-error" class="text-red-500 text-sm mt-3 text-center h-5"></p>
+        </div>
+
+        <div id="quiz-view" class="bg-white rounded-2xl shadow-xl p-6 sm:p-8 hidden flex flex-col min-h-[500px]">
+            
+            <div class="flex justify-between items-center mb-8 pb-4 border-b">
+                <div class="flex gap-4 text-sm font-semibold">
+                    <span class="text-green-600">정답: <span id="score-correct">0</span></span>
+                    <span class="text-red-500">오답: <span id="score-wrong">0</span></span>
+                </div>
+                <div class="flex items-center gap-3">
+                    <button id="wrong-note-btn" class="text-xs font-bold text-white bg-red-500 hover:bg-red-600 px-3 py-1 rounded-full transition-colors hidden">
+                        오답 노트 (<span id="wrong-note-count">0</span>)
+                    </button>
+                    <div class="text-sm text-gray-400 font-medium">
+                        남은 문제: <span id="score-remain">0</span>
+                    </div>
+                </div>
+            </div>
+
+            <div class="flex-grow flex flex-col items-center justify-center mb-6">
+                <div id="question-word" class="text-5xl sm:text-6xl font-bold text-gray-800 text-center break-keep mb-8">
+                </div>
+
+                <div class="w-full max-w-md">
+                    <input type="text" id="romaji-input" autocomplete="off"
+                        class="w-full text-center text-2xl py-3 px-4 border-b-2 border-gray-300 focus:border-indigo-500 outline-none bg-transparent transition-colors placeholder-gray-300 font-mono"
+                        placeholder="로마자를 입력하세요">
+                </div>
+                
+                <div id="feedback-msg" class="text-center mt-4 font-bold h-6 text-lg transition-all duration-200"></div>
+            </div>
+
+            <div id="result-feedback" class="hidden bg-gray-50 rounded-xl p-5 mb-6 text-center border border-gray-200 fade-in mt-2">
+                <div class="flex justify-around items-center py-1">
+                    
+                    <div class="flex-1 text-center pr-2">
+                        <span class="text-xs text-gray-400 block mb-1">정답 로마자</span>
+                        <span id="feedback-romaji" class="text-xl font-bold text-indigo-600 font-mono"></span>
+                    </div>
+                    
+                    <div class="h-12 w-px bg-gray-300 mx-3"></div>
+                    
+                    <div class="flex-1 text-center pl-2">
+                        <span class="text-xs text-gray-400 block mb-1">단어 뜻</span>
+                        <span id="feedback-meaning" class="text-lg text-gray-800 break-keep"></span>
+                    </div>
+                </div>
+            </div>
+
+            <div class="mt-auto">
+                <button id="check-btn" class="w-full bg-indigo-600 hover:bg-indigo-700 text-white font-bold py-4 rounded-xl shadow-md transition-colors text-lg">
+                    정답 확인
+                </button>
+                <button id="next-btn" class="w-full bg-gray-800 hover:bg-gray-900 text-white font-bold py-4 rounded-xl shadow-md transition-colors text-lg hidden">
+                    다음 문제
+                </button>
+            </div>
+            
+            <div class="mt-4 text-center">
+                <button id="quit-btn" class="text-xs text-gray-400 hover:text-gray-600 underline">그만두기</button>
+            </div>
+        </div>
+
+        <div id="final-view" class="bg-white rounded-2xl shadow-xl p-6 sm:p-8 hidden text-center">
+            <h1 class="text-3xl font-bold text-gray-800 mb-6">퀴즈 완료!</h1>
+            <div class="text-6xl mb-2">🎉</div>
+            <div class="text-gray-600 mb-8">모든 문제를 풀었습니다.</div>
+
+            <div class="flex justify-center gap-8 mb-8 bg-gray-50 p-6 rounded-xl">
+                <div class="text-center">
+                    <p class="text-sm text-gray-500 mb-1">맞은 개수</p>
+                    <p class="text-3xl font-bold text-green-600" id="final-correct">0</p>
+                </div>
+                <div class="w-px bg-gray-300"></div>
+                <div class="text-center">
+                    <p class="text-sm text-gray-500 mb-1">틀린 개수</p>
+                    <p class="text-3xl font-bold text-red-500" id="final-wrong">0</p>
+                </div>
+            </div>
+            <button id="final-wrong-note-btn" class="w-full bg-red-500 hover:bg-red-600 text-white font-bold py-3 px-4 rounded-xl shadow-md mb-3 transition-all hidden">
+                오답 노트 확인 (<span id="final-wrong-note-count">0</span>)
+            </button>
+            <button id="restart-btn" class="w-full bg-indigo-600 hover:bg-indigo-700 text-white font-bold py-3 px-4 rounded-xl shadow-md transition-all">
+                처음으로 돌아가기
+            </button>
+        </div>
+
+    </div>
+
+    <div id="wrong-note-modal" class="fixed inset-0 bg-black bg-opacity-50 backdrop-blur-sm hidden items-center justify-center p-4 z-50">
+        <div class="bg-white rounded-2xl shadow-2xl w-full max-w-lg max-h-[80vh] flex flex-col">
+            <div class="p-6 border-b flex justify-between items-center sticky top-0 bg-white z-10">
+                <h2 class="text-xl font-bold text-gray-800">오답 노트</h2>
+                <button onclick="closeWrongNoteModal()" class="text-3xl text-gray-500 hover:text-gray-800 font-light leading-none">&times;</button>
+            </div>
+            <div class="p-6 overflow-y-auto flex-grow">
+                <div id="wrong-note-list" class="space-y-4">
+                    </div>
+                <p id="wrong-note-empty" class="text-center text-gray-500 hidden mt-4">오답 기록이 없습니다. 모두 정답이에요!</p>
+            </div>
+            <div class="p-6 border-t flex justify-end gap-3 sticky bottom-0 bg-white z-10">
+                <button id="share-btn" class="bg-indigo-500 hover:bg-indigo-600 text-white font-bold py-2 px-4 rounded-xl transition-colors text-sm flex items-center">
+                    <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="w-4 h-4 mr-2">
+                        <path stroke-linecap="round" stroke-linejoin="round" d="M7.217 10.907a2.25 2.25 0 1 0 0 2.186m0-2.186c.18.324.287.696.287 1.093s-.107.77-.287 1.093m0-2.186 9.566-5.314m-9.566 7.5 9.566 5.314m0 0a2.25 2.25 0 1 0 3.935 2.186 2.25 2.25 0 0 0-3.935-2.186Zm0-12.814a2.25 2.25 0 1 0 3.933-2.185 2.25 2.25 0 0 0-3.933 2.185Z" />
+                    </svg>
+                    공유하기
+                </button>
+                <button onclick="closeWrongNoteModal()" class="bg-gray-200 hover:bg-gray-300 text-gray-800 font-bold py-2 px-4 rounded-xl transition-colors text-sm">
+                    닫기
+                </button>
+            </div>
+        </div>
+    </div>
+
+
+    <script>
+        let allVocabGroups = {};
+        let quizQueue = [];
+        let currentQuestion = null;
+        let correctCount = 0;
+        let wrongCount = 0;
+        let wrongAnswers = [];
+
+        const setupView = document.getElementById('setup-view');
+        const quizView = document.getElementById('quiz-view');
+        const finalView = document.getElementById('final-view');
+        
+        const groupCheckboxContainer = document.getElementById('group-checkbox-container');
+        const selectAllGroups = document.getElementById('select-all-groups');
+        const setupError = document.getElementById('setup-error');
+        const startQuizBtn = document.getElementById('start-quiz-btn');
+
+        const scoreCorrectEl = document.getElementById('score-correct');
+        const scoreWrongEl = document.getElementById('score-wrong');
+        const scoreRemainEl = document.getElementById('score-remain');
+        const wrongNoteBtn = document.getElementById('wrong-note-btn');
+        const wrongNoteCountEl = document.getElementById('wrong-note-count');
+
+        const questionWordEl = document.getElementById('question-word');
+        const romajiInput = document.getElementById('romaji-input');
+        const feedbackMsg = document.getElementById('feedback-msg');
+        const resultFeedback = document.getElementById('result-feedback');
+        const feedbackRomaji = document.getElementById('feedback-romaji');
+        const feedbackMeaning = document.getElementById('feedback-meaning');
+
+        const checkBtn = document.getElementById('check-btn');
+        const nextBtn = document.getElementById('next-btn');
+        const quitBtn = document.getElementById('quit-btn');
+        const restartBtn = document.getElementById('restart-btn');
+        const finalWrongNoteBtn = document.getElementById('final-wrong-note-btn');
+
+        const wrongNoteModal = document.getElementById('wrong-note-modal');
+        const wrongNoteList = document.getElementById('wrong-note-list');
+        const wrongNoteEmpty = document.getElementById('wrong-note-empty');
+        const shareBtn = document.getElementById('share-btn');
+        const finalWrongNoteCount = document.getElementById('final-wrong-note-count');
+
+
+        async function loadVocabulary() {
+            try {
+                const response = await fetch('romaji_reading.voca', { cache: 'no-store' });
+                if (!response.ok) throw new Error('파일을 찾을 수 없습니다.');
+                const text = await response.text();
+                
+                allVocabGroups = {};
+                let currentGroup = '미분류';
+                
+                text.split('\n').forEach(line => {
+                    line = line.trim();
+                    if (!line || line.startsWith('#')) return;
+                    if (line.startsWith('@')) {
+                        currentGroup = line.substring(1).trim();
+                        if (!allVocabGroups[currentGroup]) allVocabGroups[currentGroup] = [];
+                    } else {
+                        const parts = line.split(' - ');
+                        if (parts.length >= 2) {
+                            const rawWord = parts[0].trim();
+                            const meaning = parts.slice(1).join(' - ').trim();
+                            
+                            let reading = rawWord;
+                            const match = rawWord.match(/\[([^\]]+)\]/);
+                            if (match) {
+                                reading = match[1];
+                            }
+                            
+                            if (!allVocabGroups[currentGroup]) allVocabGroups[currentGroup] = [];
+                            allVocabGroups[currentGroup].push({ 
+                                displayWord: rawWord.replace(/\[[^\]]+\]/g, ''),
+                                fullWord: rawWord,
+                                reading: reading,
+                                meaning: meaning 
+                            });
+                        }
+                    }
+                });
+                displayGroupCheckboxes();
+            } catch (error) {
+                groupCheckboxContainer.innerHTML = `<p class="text-red-500">로드 실패: ${error.message}<br>romaji_reading.voca 파일이 있는지 확인하세요.</p>`;
+            }
+        }
+
+        function displayGroupCheckboxes() {
+            groupCheckboxContainer.innerHTML = '';
+            const groups = Object.keys(allVocabGroups);
+            if (groups.length === 0) {
+                groupCheckboxContainer.innerHTML = '<p class="text-gray-500">데이터가 없습니다.</p>';
+                return;
+            }
+            groups.forEach(g => {
+                const div = document.createElement('div');
+                div.className = 'flex items-center mb-2';
+                div.innerHTML = `
+                    <input type="checkbox" id="g-${g}" name="group-select" value="${g}" class="h-4 w-4 text-indigo-600 border-gray-300 rounded focus:ring-indigo-500">
+                    <label for="g-${g}" class="ml-3 text-sm text-gray-700 cursor-pointer select-none">${g} (${allVocabGroups[g].length})</label>
+                `;
+                groupCheckboxContainer.appendChild(div);
+            });
+        }
+
+        const hepburnMap = {
+            'あ':'a', 'い':'i', 'う':'u', 'え':'e', 'お':'o',
+            'か':'ka', 'き':'ki', 'く':'ku', 'け':'ke', 'こ':'ko',
+            'さ':'sa', 'し':'shi', 'す':'su', 'せ':'se', 'そ':'so',
+            'た':'ta', 'ち':'chi', 'つ':'tsu', 'て':'te', 'と':'to',
+            'な':'na', 'に':'ni', 'ぬ':'nu', 'ね':'ne', 'の':'no',
+            'は':'ha', 'ひ':'hi', 'ふ':'fu', 'へ':'he', 'ほ':'ho',
+            'ま':'ma', 'み':'mi', 'む':'mu', 'め':'me', 'も':'mo',
+            'や':'ya', 'ゆ':'yu', 'よ':'yo',
+            'ら':'ra', 'り':'ri', 'る':'ru', 'れ':'re', 'ろ':'ro',
+            'わ':'wa', 'を':'o', 'ん':'n',
+            
+            'が':'ga', 'ぎ':'gi', 'ぐ':'gu', 'げ':'ge', 'ご':'go',
+            'ざ':'za', 'じ':'ji', 'ず':'zu', 'ぜ':'ze', 'ぞ':'zo',
+            'だ':'da', 'ぢ':'ji', 'づ':'zu', 'で':'de', 'ど':'do',
+            'ば':'ba', 'び':'bi', 'ぶ':'bu', 'べ':'be', 'ぼ':'bo',
+            'ぱ':'pa', 'ぴ':'pi', 'ぷ':'pu', 'ぺ':'pe', 'ぽ':'po',
+            
+            'ア':'a', 'イ':'i', 'ウ':'u', 'エ':'e', 'オ':'o',
+            'カ':'ka', 'キ':'ki', 'ク':'ku', 'ケ':'ke', 'コ':'ko',
+            'サ':'sa', 'シ':'shi', 'ス':'su', 'セ':'se', 'ソ':'so',
+            'タ':'ta', 'チ':'chi', 'ツ':'tsu', 'テ':'te', 'ト':'to',
+            'ナ':'na', 'ニ':'ni', 'ヌ':'nu', 'ネ':'ne', 'ノ':'no',
+            'ハ':'ha', 'ヒ':'hi', 'フ':'fu', 'ヘ':'he', 'ホ':'ho',
+            'マ':'ma', 'ミ':'mi', 'ム':'mu', 'メ':'me', 'モ':'mo',
+            'ヤ':'ya', 'ユ':'yu', 'ヨ':'yo',
+            'ラ':'ra', 'リ':'ri', 'ル':'ru', 'レ':'re', 'ロ':'ro',
+            'ワ':'wa', 'ヲ':'o', 'ン':'n',
+            'ガ':'ga', 'ギ':'gi', 'グ':'gu', 'ゲ':'ge', 'ゴ':'go',
+            'ザ':'za', 'ジ':'ji', 'ズ':'zu', 'ゼ':'ze', 'ゾ':'zo',
+            'ダ':'da', 'ヂ':'ji', 'ヅ':'zu', 'デ':'de', 'ド':'do',
+            'バ':'ba', 'ビ':'bi', 'ブ':'bu', 'ベ':'be', 'ボ':'bo',
+            'パ':'pa', 'ピ':'pi', 'プ':'pu', 'ペ':'pe', 'ポ':'po',
+            'ー': '-'
+        };
+
+        const compoundsMap = {
+            'しゃ':'sha', 'しゅ':'shu', 'しょ':'sho',
+            'ちゃ':'cha', 'ちゅ':'chu', 'ちょ':'cho',
+            'じゃ':'ja', 'じゅ':'ju', 'じょ':'jo',
+            'きゃ':'kya', 'きゅ':'kyu', 'きょ':'kyo',
+            'ぎゃ':'gya', 'ぎゅ':'gyu', 'ぎょ':'gyo',
+            'にゃ':'nya', 'にゅ':'nyu', 'にょ':'nyo',
+            'ひゃ':'hya', 'ひゅ':'hyu', 'ひょ':'hyo',
+            'びゃ':'bya', 'びゅ':'byu', 'びょ':'byo',
+            'ぴゃ':'pya', 'ぴゅ':'pyu', 'ぴょ':'pyo',
+            'みゃ':'mya', 'みゅ':'myu', 'みょ':'myo',
+            'りゃ':'rya', 'りゅ':'ryu', 'りょ':'ryo',
+            
+            'シャ':'sha', 'シュ':'shu', 'ショ':'sho',
+            'チャ':'cha', 'チュ':'chu', 'チョ':'cho',
+            'ジャ':'ja', 'ジュ':'ju', 'ジョ':'jo',
+            'キャ':'kya', 'キュ':'kyu', 'キョ':'kyo',
+        };
+
+        function toRomaji(kana) {
+            let result = '';
+            let i = 0;
+            while (i < kana.length) {
+                const char = kana[i];
+                const nextChar = kana[i+1];
+                const twoChars = char + (nextChar || '');
+                
+                if (compoundsMap[twoChars]) {
+                    result += compoundsMap[twoChars];
+                    i += 2;
+                    continue;
+                }
+
+                if (char === 'っ' || char === 'ッ') {
+                    if (nextChar) {
+                        const nextTwo = nextChar + (kana[i+2] || '');
+                        let nextRomaji = '';
+                        if (compoundsMap[nextTwo]) {
+                            nextRomaji = compoundsMap[nextTwo];
+                        } else {
+                            nextRomaji = hepburnMap[nextChar] || '';
+                        }
+                        
+                        if (nextRomaji) {
+                            result += nextRomaji.charAt(0);
+                            i++;
+                            continue;
+                        }
+                    }
+                }
+                
+                if (hepburnMap[char]) {
+                    result += hepburnMap[char];
+                    i++;
+                } else {
+                    result += char;
+                    i++;
+                }
+            }
+            return result;
+        }
+
+        function startQuiz() {
+            const checked = document.querySelectorAll('input[name="group-select"]:checked');
+            if (checked.length === 0) {
+                setupError.textContent = '최소 하나의 그룹을 선택해주세요.';
+                return;
+            }
+            setupError.textContent = '';
+
+            quizQueue = [];
+            checked.forEach(cb => {
+                quizQueue.push(...allVocabGroups[cb.value]);
+            });
+
+            quizQueue.sort(() => Math.random() - 0.5);
+
+            if (quizQueue.length === 0) {
+                setupError.textContent = '선택한 그룹에 단어가 없습니다.';
+                return;
+            }
+
+            correctCount = 0;
+            wrongCount = 0;
+            wrongAnswers = [];
+            updateScore();
+
+            setupView.classList.add('hidden');
+            quizView.classList.remove('hidden');
+            finalView.classList.add('hidden');
+
+            loadNextQuestion();
+        }
+
+        function loadNextQuestion() {
+            if (quizQueue.length === 0) {
+                finishQuiz();
+                return;
+            }
+
+            currentQuestion = quizQueue.pop();
+            updateScore();
+
+            questionWordEl.innerHTML = currentQuestion.displayWord;
+            
+            romajiInput.value = '';
+            romajiInput.disabled = false;
+            romajiInput.focus();
+            
+            feedbackMsg.textContent = '';
+            resultFeedback.classList.add('hidden');
+            
+            checkBtn.classList.remove('hidden');
+            nextBtn.classList.add('hidden');
+        }
+
+        function checkAnswer() {
+            const userMsg = romajiInput.value.trim().toLowerCase();
+            if (!userMsg) return;
+
+            const correctRomaji = toRomaji(currentQuestion.reading);
+            const isCorrect = (userMsg === correctRomaji);
+
+            romajiInput.disabled = true;
+            
+            resultFeedback.classList.remove('hidden');
+            feedbackRomaji.textContent = correctRomaji;
+            feedbackMeaning.textContent = currentQuestion.meaning;
+
+            if (isCorrect) {
+                correctCount++;
+                romajiInput.classList.add('text-green-600', 'font-bold');
+                feedbackMsg.textContent = "정답입니다! ✅";
+                feedbackMsg.className = "text-center mt-4 font-bold h-6 text-lg text-green-600 fade-in";
+                
+            } else {
+                wrongCount++;
+                romajiInput.classList.add('text-red-500', 'font-bold', 'shake');
+                feedbackMsg.textContent = "틀렸습니다 ❌";
+                feedbackMsg.className = "text-center mt-4 font-bold h-6 text-lg text-red-500 fade-in";
+                
+                wrongAnswers.push({
+                    word: currentQuestion.displayWord,
+                    wrongRomaji: userMsg,
+                    correctRomaji: correctRomaji,
+                    meaning: currentQuestion.meaning
+                });
+            }
+            
+            checkBtn.classList.add('hidden');
+            nextBtn.classList.remove('hidden');
+            nextBtn.focus();
+            
+            updateScore();
+        }
+
+        function updateScore() {
+            scoreCorrectEl.textContent = correctCount;
+            scoreWrongEl.textContent = wrongCount;
+            scoreRemainEl.textContent = quizQueue.length;
+            
+            wrongNoteCountEl.textContent = wrongAnswers.length;
+            finalWrongNoteCount.textContent = wrongAnswers.length;
+
+            if (wrongAnswers.length > 0) {
+                wrongNoteBtn.classList.remove('hidden');
+                finalWrongNoteBtn.classList.remove('hidden');
+            } else {
+                wrongNoteBtn.classList.add('hidden');
+                finalWrongNoteBtn.classList.add('hidden');
+            }
+        }
+
+        function finishQuiz() {
+            quizView.classList.add('hidden');
+            finalView.classList.remove('hidden');
+            
+            document.getElementById('final-correct').textContent = correctCount;
+            document.getElementById('final-wrong').textContent = wrongCount;
+            
+            updateScore();
+        }
+
+        function showWrongAnswers() {
+            wrongNoteList.innerHTML = '';
+            
+            if (wrongAnswers.length === 0) {
+                wrongNoteEmpty.classList.remove('hidden');
+            } else {
+                wrongNoteEmpty.classList.add('hidden');
+                wrongAnswers.slice().reverse().forEach((item, index) => {
+                    const itemEl = document.createElement('div');
+                    itemEl.className = 'p-3 border rounded-xl bg-gray-50 shadow-sm';
+                    itemEl.innerHTML = `
+                        <div class="font-bold text-xl text-gray-800 mb-1">
+                            ${item.word}
+                            <span class="text-sm text-gray-500 ml-2 font-normal">(${item.meaning})</span>
+                        </div>
+                        <div class="text-sm text-red-600 mb-1">
+                            <span class="font-semibold">내 오답:</span> <span class="font-mono">${item.wrongRomaji}</span>
+                        </div>
+                        <div class="text-sm text-green-600">
+                            <span class="font-semibold">정답:</span> <span class="font-mono">${item.correctRomaji}</span>
+                        </div>
+                    `;
+                    wrongNoteList.appendChild(itemEl);
+                });
+            }
+
+            wrongNoteModal.classList.remove('hidden');
+            wrongNoteModal.classList.add('flex');
+        }
+
+        function closeWrongNoteModal() {
+            wrongNoteModal.classList.add('hidden');
+            wrongNoteModal.classList.remove('flex');
+        }
+        
+        async function shareWrongAnswers() {
+            if (wrongAnswers.length === 0) {
+                alert("공유할 오답이 없습니다!");
+                return;
+            }
+            
+            let shareText = `[일본어 로마자 표기 테스트 오답 노트]\n총 오답 수: ${wrongAnswers.length}개\n\n`;
+            
+            wrongAnswers.forEach((item, index) => {
+                shareText += `--- 오답 #${index + 1} ---\n`;
+                shareText += `단어: ${item.word} (${item.meaning})\n`;
+                shareText += `내 오답: ${item.wrongRomaji}\n`;
+                shareText += `정답: ${item.correctRomaji}\n\n`;
+            });
+            
+            const shareData = {
+                title: '로마자 표기 오답 노트',
+                text: shareText,
+                // 💡 URL 속성 제거: 공유 시 텍스트에만 집중하도록 수정
+                // url: window.location.href, 
+            };
+            
+            try {
+                if (navigator.share) {
+                    await navigator.share(shareData);
+                } else if (navigator.clipboard) {
+                    await navigator.clipboard.writeText(shareText);
+                    alert("공유 기능이 지원되지 않아 클립보드에 오답 노트가 복사되었습니다!");
+                } else {
+                    alert("이 브라우저에서는 공유 기능을 사용할 수 없습니다.");
+                }
+            } catch (error) {
+                if (error.name !== 'AbortError') { 
+                    console.error('Sharing failed:', error);
+                }
+            }
+        }
+
+        // --- 이벤트 바인딩 ---
+        startQuizBtn.addEventListener('click', startQuiz);
+        wrongNoteBtn.addEventListener('click', showWrongAnswers);
+        finalWrongNoteBtn.addEventListener('click', showWrongAnswers);
+        shareBtn.addEventListener('click', shareWrongAnswers);
+
+        selectAllGroups.addEventListener('change', (e) => {
+            document.querySelectorAll('input[name="group-select"]').forEach(cb => cb.checked = e.target.checked);
+        });
+
+        checkBtn.addEventListener('click', checkAnswer);
+        
+        romajiInput.addEventListener('keydown', (e) => {
+            if (e.key === 'Enter') {
+                e.preventDefault(); 
+                if (!checkBtn.classList.contains('hidden')) {
+                    checkAnswer();
+                }
+            }
+        });
+        
+        nextBtn.addEventListener('keydown', (e) => {
+             if (e.key === 'Enter') {
+                 e.preventDefault();
+                 romajiInput.classList.remove('text-green-600', 'text-red-500', 'font-bold', 'shake');
+                 loadNextQuestion();
+             }
+        });
+
+        nextBtn.addEventListener('click', () => {
+            romajiInput.classList.remove('text-green-600', 'text-red-500', 'font-bold', 'shake');
+            loadNextQuestion();
+        });
+
+        quitBtn.addEventListener('click', finishQuiz);
+        
+        restartBtn.addEventListener('click', () => {
+            finalView.classList.add('hidden');
+            setupView.classList.remove('hidden');
+        });
+
+        document.addEventListener('DOMContentLoaded', () => {
+            loadVocabulary();
+        });
+
+    </script>
+</body>
+</html>
