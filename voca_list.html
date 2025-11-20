@@ -145,15 +145,15 @@
                 <strong>선택 범위:</strong> <span id="selected-scope-text"></span>
             </div>
 
-            <div class="grid grid-cols-3 gap-3 mb-4">
-                <button id="toggle-word-btn" class="flex-1 bg-blue-500 hover:bg-blue-600 text-white font-semibold py-2 px-4 rounded-lg transition-colors duration-200">
+            <div class="grid grid-cols-3 gap-2 mb-4">
+                <button id="toggle-word-btn" class="flex-1 bg-blue-500 hover:bg-blue-600 text-white text-sm sm:text-base font-semibold py-3 px-0 rounded-lg transition-colors duration-200 whitespace-nowrap">
                     단어 가리기
                 </button>
-                <button id="toggle-meaning-btn" class="flex-1 bg-green-500 hover:bg-green-600 text-white font-semibold py-2 px-4 rounded-lg transition-colors duration-200">
+                <button id="toggle-meaning-btn" class="flex-1 bg-green-500 hover:bg-green-600 text-white text-sm sm:text-base font-semibold py-3 px-0 rounded-lg transition-colors duration-200 whitespace-nowrap">
                     뜻 가리기
                 </button>
-                <button id="toggle-select-btn" class="flex-1 bg-gray-500 hover:bg-gray-600 text-white font-semibold py-2 px-4 rounded-lg transition-colors duration-200">
-                    단어 선택하기
+                <button id="toggle-select-btn" class="flex-1 bg-gray-500 hover:bg-gray-600 text-white text-sm sm:text-base font-semibold py-3 px-0 rounded-lg transition-colors duration-200 whitespace-nowrap">
+                    단어 선택
                 </button>
             </div>
 
@@ -503,8 +503,11 @@
             const selectTds = document.querySelectorAll('.select-td');
             
             if (isSelectMode) {
+                // [수정] 텍스트를 '선택 취소'로 변경
                 toggleSelectBtn.textContent = '선택 취소';
-                toggleSelectBtn.className = "flex-1 bg-red-500 hover:bg-red-600 text-white font-semibold py-2 px-4 rounded-lg transition-colors duration-200"; 
+                // [수정] 클래스에서 px-4를 px-0으로 유지하고 스타일 적용
+                toggleSelectBtn.className = "flex-1 bg-red-500 hover:bg-red-600 text-white text-sm sm:text-base font-semibold py-3 px-0 rounded-lg transition-colors duration-200 whitespace-nowrap"; 
+                
                 selectTh.classList.remove('hidden');
                 selectTds.forEach(td => td.classList.remove('hidden'));
                 shareSelectedBtn.classList.remove('hidden');
@@ -528,8 +531,11 @@
                 backToSetupBtn.classList.add('opacity-50', 'cursor-not-allowed');
 
             } else {
-                toggleSelectBtn.textContent = '단어 선택하기';
-                toggleSelectBtn.className = "flex-1 bg-gray-500 hover:bg-gray-600 text-white font-semibold py-2 px-4 rounded-lg transition-colors duration-200"; 
+                // [수정] 텍스트를 '단어 선택'으로 변경 (짧게)
+                toggleSelectBtn.textContent = '단어 선택';
+                // [수정] 클래스 복구 (px-0 유지)
+                toggleSelectBtn.className = "flex-1 bg-gray-500 hover:bg-gray-600 text-white text-sm sm:text-base font-semibold py-3 px-0 rounded-lg transition-colors duration-200 whitespace-nowrap"; 
+                
                 selectTh.classList.add('hidden');
                 selectTds.forEach(td => td.classList.add('hidden'));
                 shareSelectedBtn.classList.add('hidden');
