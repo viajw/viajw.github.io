@@ -68,7 +68,7 @@
         </button>
     </div>
 
-    <script>
+   <script>
         const img = document.getElementById('chart-image');
         const container = document.getElementById('image-container');
 
@@ -79,12 +79,16 @@
         let startY = 0;
         let isDragging = false;
 
+        // 핀치 줌을 위한 변수
+        let initialDistance = 0;
+        let initialScale = 1;
+
         // 화면 갱신 함수
         function updateTransform() {
             img.style.transform = `translate(${pointX}px, ${pointY}px) scale(${scale})`;
         }
 
-        // --- 줌 기능 ---
+        // --- 버튼 줌 기능 ---
         function zoomIn() {
             if (scale < 5) {
                 scale += 0.25;
@@ -106,9 +110,9 @@
             updateTransform();
         }
 
-        // --- 드래그(Pan) 기능 (PC 마우스 이벤트) ---
+        // --- PC 마우스 이벤트 (드래그) ---
         container.addEventListener('mousedown', (e) => {
-            e.preventDefault(); // 이미지 선택 방지
+            e.preventDefault();
             isDragging = true;
             startX = e.clientX - pointX;
             startY = e.clientY - pointY;
@@ -122,23 +126,72 @@
             updateTransform();
         });
 
-        container.addEventListener('mouseup', () => {
-            isDragging = false;
-        });
+        container.addEventListener('mouseup', () => { isDragging = false; });
+        container.addEventListener('mouseleave', () => { isDragging = false; });
 
-        container.addEventListener('mouseleave', () => {
-            isDragging = false;
-        });
-
-        // --- 마우스 휠 줌 (보너스 기능) ---
+        // --- PC 마우스 휠 줌 ---
         container.addEventListener('wheel', (e) => {
             e.preventDefault();
-            if (e.deltaY < 0) {
-                zoomIn();
-            } else {
-                zoomOut();
+            if (e.deltaY < 0) zoomIn();
+            else zoomOut();
+        }, { passive: false });
+
+
+        // =========================================
+        //  📱 모바일 터치 이벤트 (추가된 부분)
+        // =========================================
+
+        // 두 손가락 사이의 거리를 구하는 함수 (피타고라스 정의)
+        function getDistance(touches) {
+            const dx = touches[0].clientX - touches[1].clientX;
+            const dy = touches[0].clientY - touches[1].clientY;
+            return Math.hypot(dx, dy);
+        }
+
+        container.addEventListener('touchstart', (e) => {
+            if (e.touches.length === 1) {
+                // 손가락 1개: 드래그 시작
+                isDragging = true;
+                startX = e.touches[0].clientX - pointX;
+                startY = e.touches[0].clientY - pointY;
+            } else if (e.touches.length === 2) {
+                // 손가락 2개: 핀치 줌 시작
+                isDragging = false; // 줌 중에는 드래그 중지
+                initialDistance = getDistance(e.touches);
+                initialScale = scale;
+            }
+        });
+
+        container.addEventListener('touchmove', (e) => {
+            e.preventDefault(); // 브라우저 기본 스크롤 방지
+
+            if (e.touches.length === 1 && isDragging) {
+                // 손가락 1개: 이동 (Pan)
+                pointX = e.touches[0].clientX - startX;
+                pointY = e.touches[0].clientY - startY;
+                updateTransform();
+
+            } else if (e.touches.length === 2) {
+                // 손가락 2개: 확대/축소 (Pinch Zoom)
+                const currentDistance = getDistance(e.touches);
+                if (initialDistance > 0) {
+                    // 거리 비율에 따라 스케일 조절
+                    const diff = currentDistance / initialDistance;
+                    let newScale = initialScale * diff;
+
+                    // 최소/최대 스케일 제한
+                    newScale = Math.max(0.5, Math.min(newScale, 5));
+                    
+                    scale = newScale;
+                    updateTransform();
+                }
             }
         }, { passive: false });
+
+        container.addEventListener('touchend', () => {
+            isDragging = false;
+            initialDistance = 0;
+        });
 
     </script>
 </body>
