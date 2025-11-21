@@ -187,7 +187,7 @@
 
     <script>
         let allVocabGroups = {};
-        let currentFilesToLoad = ['romaji_reading.voca']; // 기본 파일: romaji_reading.voca
+        let currentFilesToLoad = ['romaji_reading.voca']; // 기본 파일
         let quizQueue = [];
         let currentQuestion = null;
         let correctCount = 0;
@@ -235,7 +235,6 @@
             try {
                 const response = await fetch(filename, { cache: 'no-store' });
                 if (!response.ok) {
-                    // japanese.voca 파일이 없어도 에러 대신 경고 메시지만 표시
                     if(filename !== 'romaji_reading.voca') {
                         console.warn(`${filename} 파일을 찾을 수 없습니다. (경고)`);
                     } else {
@@ -254,7 +253,6 @@
                     if (!line || line.startsWith('#')) return;
                     
                     if (line.startsWith('@')) {
-                        // 파일명을 그룹 이름 접두사로 사용하여 충돌 방지
                         currentGroup = isJapaneseVoca ? 
                             `단어장 - ${line.substring(1).trim()}` : 
                             line.substring(1).trim();
@@ -289,7 +287,6 @@
             }
         }
 
-        // --- 단어장 로드 함수 (두 파일 처리) ---
         async function loadVocabulary() {
             allVocabGroups = {};
             groupCheckboxContainer.innerHTML = `<p class="text-gray-500">선택된 파일들을 불러오는 중...</p>`;
@@ -297,10 +294,9 @@
             
             let totalGroups = {};
             
-            // currentFilesToLoad 배열에 있는 모든 파일을 순차적으로 로드
             for (const filename of currentFilesToLoad) {
                 const groups = await fetchAndParseVocab(filename);
-                Object.assign(totalGroups, groups); // 그룹 합치기
+                Object.assign(totalGroups, groups);
             }
             
             allVocabGroups = totalGroups;
@@ -329,7 +325,7 @@
                 `;
                 groupCheckboxContainer.appendChild(div);
             });
-            selectAllGroups.checked = false; // 새 목록 로드 후 전체 선택 해제
+            selectAllGroups.checked = false;
         }
 
         const hepburnMap = {
@@ -430,6 +426,15 @@
             return result;
         }
 
+        // Fisher-Yates Shuffle 알고리즘 (랜덤 섞기 강화)
+        function shuffleArray(array) {
+            for (let i = array.length - 1; i > 0; i--) {
+                const j = Math.floor(Math.random() * (i + 1));
+                [array[i], array[j]] = [array[j], array[i]];
+            }
+            return array;
+        }
+
         function startQuiz() {
             const checked = document.querySelectorAll('input[name="group-select"]:checked');
             if (checked.length === 0) {
@@ -443,7 +448,8 @@
                 quizQueue.push(...allVocabGroups[cb.value]);
             });
 
-            quizQueue.sort(() => Math.random() - 0.5);
+            // 강화된 섞기 기능 적용
+            shuffleArray(quizQueue);
 
             if (quizQueue.length === 0) {
                 setupError.textContent = '선택한 그룹에 단어가 없습니다.';
@@ -632,26 +638,22 @@
             document.querySelectorAll('input[name="group-select"]').forEach(cb => cb.checked = e.target.checked);
         });
 
-        // 💡 japanese.voca 로드 버튼 이벤트 핸들러
         loadJapaneseVocaBtn.addEventListener('click', () => {
             const japaneseVocaFile = 'japanese.voca';
             const isCurrentlyLoading = currentFilesToLoad.includes(japaneseVocaFile);
             
             if (isCurrentlyLoading) {
-                // 제거 (미포함)
                 currentFilesToLoad = currentFilesToLoad.filter(f => f !== japaneseVocaFile);
                 loadJapaneseVocaBtn.classList.replace('bg-green-100', 'bg-blue-100');
                 loadJapaneseVocaBtn.classList.replace('text-green-800', 'text-blue-800');
                 vocaBtnText.textContent = '단어장 포함하기';
             } else {
-                // 추가 (포함)
                 currentFilesToLoad.push(japaneseVocaFile);
                 loadJapaneseVocaBtn.classList.replace('bg-blue-100', 'bg-green-100');
                 loadJapaneseVocaBtn.classList.replace('text-blue-800', 'text-green-800');
                 vocaBtnText.textContent = '읽기 연습 자료만';
             }
 
-            // 파일 목록 변경 후 단어장 다시 로드
             loadVocabulary();
         });
 
