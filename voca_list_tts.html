@@ -1,0 +1,610 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>일본어 단어장 (Natural Ending Ver.)</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/static/pretendard.min.css" />
+    <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+JP:wght@400;500;700&display=swap" rel="stylesheet">
+    
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    fontFamily: {
+                        sans: ['Pretendard', 'Noto Sans JP', 'sans-serif'],
+                    },
+                    colors: {
+                        indigo: { 50: '#eef2ff', 100: '#e0e7ff', 500: '#6366f1', 600: '#4f46e5', 700: '#4338ca' }
+                    }
+                },
+            },
+        }
+    </script>
+    
+    <style>
+        :root { --word-font-size: 18px; }
+
+        /* 후리가나 스타일 */
+        ruby rt { font-size: 0.6em; user-select: none; color: #4b5563; transition: color 0.5s ease; }
+        .hide-furigana ruby rt { display: none; }
+    
+        /* 단어/뜻 스타일 */
+        .word-cell { font-size: var(--word-font-size) !important; transition: color 0.5s ease, font-size 0.2s ease; word-wrap: break-word; overflow-wrap: break-word; }
+        .meaning-cell { transition: color 0.5s ease; word-wrap: break-word; overflow-wrap: break-word; }
+
+        /* 가리기 효과 */
+        .hide-text { color: transparent !important; user-select: none; cursor: pointer; }
+        .hide-text ruby rt { color: transparent !important; }
+    </style>
+</head>
+<body class="bg-gray-100 flex items-center justify-center min-h-screen font-sans">
+
+    <div class="container mx-auto max-w-2xl w-full p-4 sm:p-6">
+        
+        <div id="setup-container" class="bg-white rounded-2xl shadow-xl p-6 sm:p-8">
+            <h1 class="text-2xl sm:text-3xl font-bold text-gray-800 mb-6 text-center">단어장</h1>
+            <div class="mb-6">
+                <label class="block text-lg font-semibold text-gray-700 mb-3">원하는 범위를 선택하세요.</label>
+                <div class="border rounded-lg p-4 max-h-60 overflow-y-auto bg-gray-50">
+                    <div class="flex items-center mb-3 pb-3 border-b">
+                        <input type="checkbox" id="select-all-groups" class="h-5 w-5 text-indigo-600 border-gray-300 rounded focus:ring-indigo-500">
+                        <label for="select-all-groups" class="ml-3 block text-base font-semibold text-gray-900">전체 선택</label>
+                    </div>
+                    <div id="group-checkbox-container">
+                        <p class="text-gray-500">단어장 파일을 불러오는 중...</p>
+                    </div>
+                </div>
+            </div>
+            <button id="start-btn" class="w-full bg-indigo-600 hover:bg-indigo-700 text-white font-bold py-3 px-4 rounded-lg transition-all duration-200 shadow-md">단어장 보기</button>
+            <p id="setup-error" class="text-red-500 text-sm mt-3 text-center"></p>
+        </div>
+
+        <div id="wordlist-container" class="bg-white rounded-2xl shadow-xl p-6 sm:p-8 hidden">
+            
+            <div class="flex flex-col sm:flex-row justify-between items-center mb-4 gap-3">
+                <h1 class="text-2xl sm:text-3xl font-bold text-gray-800 self-start sm:self-center">단어장</h1>
+                
+                <div class="flex items-center gap-4 self-end sm:self-center">
+                    <label class="flex items-center cursor-pointer select-none">
+                        <input type="checkbox" id="furigana-toggle" class="h-4 w-4 text-indigo-600 border-gray-300 rounded focus:ring-indigo-500" checked>
+                        <span class="ml-1 text-sm text-gray-600 font-medium">후리가나</span>
+                    </label>
+                    
+                    <div class="w-px h-4 bg-gray-300"></div>
+
+                    <button id="font-decrease-btn" class="text-gray-500 hover:text-indigo-600 transition-colors duration-200" title="글자 작게">
+                        <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" class="w-6 h-6"><path stroke-linecap="round" stroke-linejoin="round" d="M19.5 12h-15" /></svg>
+                    </button>
+
+                    <button id="font-increase-btn" class="text-gray-500 hover:text-indigo-600 transition-colors duration-200" title="글자 크게">
+                        <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" class="w-6 h-6"><path stroke-linecap="round" stroke-linejoin="round" d="M12 4.5v15m7.5-7.5h-15" /></svg>
+                    </button>
+
+                    <button id="random-btn" class="text-gray-500 hover:text-indigo-600 transition-colors duration-200" title="순서 섞기">
+                        <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" class="w-6 h-6"><path stroke-linecap="round" stroke-linejoin="round" d="M16.023 9.348h4.992v-.001M2.985 19.644v-4.992m0 0h4.992m-4.993 0 3.181 3.183a8.25 8.25 0 0 0 13.803-3.7M4.031 9.865a8.25 8.25 0 0 1 13.803-3.7l3.181 3.182m0-4.991v4.99" /></svg>
+                    </button>
+                    
+                    <button id="back-to-setup-btn" class="text-gray-500 hover:text-indigo-600 transition-colors duration-200" title="범위 설정으로 이동">
+                        <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" class="w-6 h-6"><path stroke-linecap="round" stroke-linejoin="round" d="m2.25 12 8.954-8.955c.44-.439 1.152-.439 1.591 0L21.75 12M4.5 9.75v10.125c0 .621.504 1.125 1.125 1.125H9.75v-4.875c0-.621.504-1.125 1.125-1.125h2.25c.621 0 1.125.504 1.125 1.125V21h4.125c.621 0 1.125-.504 1.125-1.125V9.75M8.25 21h8.25" /></svg>
+                    </button>
+                </div>
+            </div>
+            
+            <div id="selected-scope-container" class="mb-4 p-3 bg-blue-50 border border-blue-200 rounded-lg text-blue-800 text-sm">
+                <strong>선택 범위:</strong> <span id="selected-scope-text"></span>
+            </div>
+
+            <div class="grid grid-cols-3 gap-2 mb-4">
+                <button id="toggle-word-btn" class="flex-1 bg-blue-500 hover:bg-blue-600 text-white text-sm sm:text-base font-semibold py-3 px-0 rounded-lg transition-colors duration-200 whitespace-nowrap">단어 가리기</button>
+                <button id="toggle-meaning-btn" class="flex-1 bg-green-500 hover:bg-green-600 text-white text-sm sm:text-base font-semibold py-3 px-0 rounded-lg transition-colors duration-200 whitespace-nowrap">뜻 가리기</button>
+                <button id="toggle-select-btn" class="flex-1 bg-gray-500 hover:bg-gray-600 text-white text-sm sm:text-base font-semibold py-3 px-0 rounded-lg transition-colors duration-200 whitespace-nowrap">단어 선택</button>
+            </div>
+
+            <div class="overflow-x-auto overflow-y-auto max-h-[60vh] border rounded-lg">
+                <table class="min-w-full divide-y divide-gray-200 table-fixed">
+                    <thead class="bg-gray-50 sticky top-0 z-10">
+                        <tr>
+                            <th id="select-th" scope="col" class="p-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider w-12 hidden">
+                                <input type="checkbox" id="select-all-words" class="h-4 w-4 text-indigo-600 border-gray-300 rounded focus:ring-indigo-500">
+                            </th>
+                            <th scope="col" class="p-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider w-5/12">단어</th>
+                            <th scope="col" class="p-3 text-center text-xs font-medium text-gray-500 uppercase tracking-wider w-20">기능</th>
+                            <th scope="col" class="p-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider w-auto">뜻</th>
+                        </tr>
+                    </thead>
+                    <tbody id="word-list-body" class="bg-white divide-y divide-gray-200">
+                        </tbody>
+                </table>
+            </div>
+            
+            <button id="share-selected-btn" class="w-full bg-indigo-600 hover:bg-indigo-700 text-white font-bold py-3 px-4 rounded-lg transition-all duration-200 shadow-md mt-4 hidden">
+                선택한 단어 공유하기
+            </button>
+        </div>
+    </div>
+
+    <script>
+        // --- 전역 변수 ---
+        let allVocabGroups = {}; 
+        let activeWordList = []; 
+        let isWordHidden = false;
+        let isMeaningHidden = false;
+        let isSelectMode = false;
+        let currentWordFontSize = 18; 
+        
+        // [목소리 캐싱]
+        let preferredVoice = null;
+
+        // --- HTML 요소 (생략 가능하나 유지) ---
+        const setupContainer = document.getElementById('setup-container');
+        const wordlistContainer = document.getElementById('wordlist-container');
+        const groupCheckboxContainer = document.getElementById('group-checkbox-container');
+        const selectAllGroups = document.getElementById('select-all-groups');
+        const startBtn = document.getElementById('start-btn');
+        const setupError = document.getElementById('setup-error');
+        const wordListBody = document.getElementById('word-list-body');
+        const backToSetupBtn = document.getElementById('back-to-setup-btn');
+        const randomBtn = document.getElementById('random-btn');
+        const selectedScopeText = document.getElementById('selected-scope-text');
+        const toggleWordBtn = document.getElementById('toggle-word-btn');
+        const toggleMeaningBtn = document.getElementById('toggle-meaning-btn');
+        const toggleSelectBtn = document.getElementById('toggle-select-btn');
+        const selectTh = document.getElementById('select-th');
+        const selectAllWords = document.getElementById('select-all-words');
+        const shareSelectedBtn = document.getElementById('share-selected-btn');
+        const fontIncreaseBtn = document.getElementById('font-increase-btn');
+        const fontDecreaseBtn = document.getElementById('font-decrease-btn');
+        const furiganaToggle = document.getElementById('furigana-toggle');
+
+        // --- [음성 로드 함수] ---
+        function loadPreferredVoice() {
+            const voices = window.speechSynthesis.getVoices();
+            if (voices.length === 0) return; 
+
+            // 1순위: Edge Natural / Online
+            let target = voices.find(v => v.lang === 'ja-JP' && (v.name.includes('Natural') || v.name.includes('Online')));
+            // 2순위: Google
+            if (!target) target = voices.find(v => v.lang === 'ja-JP' && v.name.includes('Google'));
+            // 3순위: Siri
+            if (!target) target = voices.find(v => v.lang === 'ja-JP' && v.name.includes('Siri'));
+            // 4순위: fallback
+            if (!target) target = voices.find(v => v.lang === 'ja-JP');
+
+            if (target) {
+                preferredVoice = target;
+                console.log("✅ 목소리 로드 완료:", target.name);
+            }
+        }
+
+        // 페이지 로드 시점에 목소리 로딩 시도
+        if ('speechSynthesis' in window) {
+            window.speechSynthesis.onvoiceschanged = loadPreferredVoice;
+            loadPreferredVoice();
+        }
+
+        // --- [데이터 로드 및 UI 처리] ---
+
+        async function loadVocabulary() {
+            try {
+                const response = await fetch('japanese.voca?t=' + new Date().getTime());
+                if (!response.ok) throw new Error('japanese.voca 파일을 불러올 수 없습니다.');
+                const text = await response.text();
+                
+                allVocabGroups = {};
+                let currentGroup = '미분류';
+                
+                text.split('\n').forEach(line => {
+                    line = line.trim();
+                    if (line.length === 0) return;
+                    if (line.startsWith('#')) return;
+
+                    if (line.startsWith('@')) {
+                        currentGroup = line.substring(1).trim();
+                        if (!allVocabGroups[currentGroup]) allVocabGroups[currentGroup] = [];
+                    } else {
+                        const parts = line.split(' - ');
+                        if (parts.length >= 2) {
+                            const word = parts[0].trim(); 
+                            const meaning = parts.slice(1).join(' - ').trim();
+                            if (!allVocabGroups[currentGroup]) allVocabGroups[currentGroup] = [];
+                            allVocabGroups[currentGroup].push({ word, meaning, originGroup: currentGroup });
+                        }
+                    }
+                });
+                displayGroupCheckboxes();
+                restoreState();
+            } catch (error) {
+                console.error(error);
+                groupCheckboxContainer.innerHTML = `<p class="text-red-500">${error.message}</p>`;
+            }
+        }
+
+        function displayGroupCheckboxes() {
+            groupCheckboxContainer.innerHTML = '';
+            const groupNames = Object.keys(allVocabGroups);
+            if (groupNames.length === 0) {
+                groupCheckboxContainer.innerHTML = '<p class="text-gray-500">불러올 그룹이 없습니다.</p>';
+                return;
+            }
+            groupNames.forEach(groupName => {
+                const div = document.createElement('div');
+                div.className = 'flex items-center mb-2';
+                div.innerHTML = `
+                    <input type="checkbox" id="group-${groupName}" name="group-select" value="${groupName}" class="h-4 w-4 text-indigo-600 border-gray-300 rounded focus:ring-indigo-500">
+                    <label for="group-${groupName}" class="ml-3 block text-sm text-gray-700">${groupName} (${allVocabGroups[groupName].length}개)</label>
+                `;
+                groupCheckboxContainer.appendChild(div);
+            });
+        }
+
+        function restoreState() {
+            const savedGroupsJson = sessionStorage.getItem('voca_selected_groups');
+            if (savedGroupsJson) {
+                const savedGroups = JSON.parse(savedGroupsJson);
+                const checkboxes = document.querySelectorAll('input[name="group-select"]');
+                let hasValidGroup = false;
+                checkboxes.forEach(cb => {
+                    if (savedGroups.includes(cb.value)) {
+                        cb.checked = true;
+                        hasValidGroup = true;
+                    }
+                });
+                if (hasValidGroup) showWordList(false);
+            }
+        }
+
+        function showWordList(shouldSaveState = true) {
+            const selectedGroups = Array.from(document.querySelectorAll('input[name="group-select"]:checked')).map(cb => cb.value);
+            if (selectedGroups.length === 0) {
+                setupError.textContent = '표시할 그룹을 1개 이상 선택하세요.';
+                return;
+            }
+            if (shouldSaveState) sessionStorage.setItem('voca_selected_groups', JSON.stringify(selectedGroups));
+
+            activeWordList = [];
+            selectedGroups.forEach(groupName => {
+                activeWordList.push(...allVocabGroups[groupName]);
+            });
+
+            if (activeWordList.length === 0) {
+                setupError.textContent = '선택한 그룹에 단어가 없습니다.';
+                return;
+            }
+
+            selectedScopeText.textContent = (selectedGroups.length === Object.keys(allVocabGroups).length) ? '단어장 전체' : selectedGroups.join(', ');
+            
+            displayWordList();
+            
+            setupContainer.classList.add('hidden');
+            wordlistContainer.classList.remove('hidden');
+            setupError.textContent = '';
+            
+            if (isSelectMode) toggleSelectMode(); 
+            if (furiganaToggle.checked) wordListBody.classList.remove('hide-furigana');
+            else wordListBody.classList.add('hide-furigana');
+        }
+        
+        function formatFurigana(word) {
+            return word.replace(/([\u4E00-\u9FAF]+)\[([^\]]+)\]/g, (match, kanji, furigana) => {
+                return `<ruby>${kanji}<rt>${furigana}</rt></ruby>`;
+            }).replace(/([^\u4E00-\u9FAF\s]+)\[([^\]]+)\]/g, (match, text, furigana) => {
+                 return `<ruby>${text}<rt>${furigana}</rt></ruby>`;
+            });
+        }
+
+        function displayWordList() {
+            wordListBody.innerHTML = ''; 
+            toggleWordBtn.textContent = isWordHidden ? '단어 보이기' : '단어 가리기';
+            toggleMeaningBtn.textContent = isMeaningHidden ? '뜻 보이기' : '뜻 가리기';
+
+            activeWordList.forEach((item, index) => {
+                const tr = document.createElement('tr');
+                const wordClass = isWordHidden ? 'hide-text' : '';
+                const meaningClass = isMeaningHidden ? 'hide-text' : '';
+                const wordWithFurigana = formatFurigana(item.word);
+                
+                // 버튼 영역
+                const btnContainer = document.createElement('div');
+                btnContainer.className = 'flex items-center justify-center gap-2'; 
+
+                // 1. 사전 버튼
+                const dictButton = document.createElement('button');
+                dictButton.className = 'text-gray-400 hover:text-green-600 transition-colors duration-150 p-1';
+                dictButton.title = '네이버 사전 검색';
+                dictButton.innerHTML = `<svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" class="w-5 h-5"> <path stroke-linecap="round" stroke-linejoin="round" d="m21 21-5.197-5.197m0 0A7.5 7.5 0 1 0 5.196 5.196a7.5 7.5 0 0 0 10.607 10.607Z" /> </svg>`;
+                dictButton.onclick = (e) => {
+                    e.stopPropagation(); 
+                    sessionStorage.setItem('voca_scroll_y', window.scrollY);
+                    openNaverDictionary(item.word);
+                };
+
+                // 2. 듣기 버튼
+                const speakButton = document.createElement('button');
+                speakButton.className = 'text-gray-400 hover:text-indigo-600 transition-colors duration-150 p-1';
+                speakButton.title = '발음 듣기';
+                speakButton.innerHTML = `<svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" class="w-5 h-5"><path stroke-linecap="round" stroke-linejoin="round" d="M19.114 5.636a9 9 0 0 1 0 12.728M16.463 8.288a5.25 5.25 0 0 1 0 7.424M6.75 8.25l4.72-4.72a.75.75 0 0 1 1.28.53v15.88a.75.75 0 0 1-1.28.53l-4.72-4.72H4.51c-.88 0-1.704-.507-1.938-1.354A9.009 9.009 0 0 1 2.25 12c0-.83.112-1.633.322-2.396C2.806 8.756 3.63 8.25 4.51 8.25H6.75Z" /></svg>`;
+                speakButton.onclick = (e) => {
+                    e.stopPropagation();
+                    speakText(item.word);
+                };
+
+                btnContainer.appendChild(dictButton);
+                btnContainer.appendChild(speakButton);
+
+                const dictTd = document.createElement('td');
+                dictTd.className = 'p-3 text-center align-middle';
+                dictTd.appendChild(btnContainer);
+
+                const wordTd = document.createElement('td');
+                wordTd.className = `word-cell p-3 align-middle text-gray-900 break-words ${wordClass}`;
+                wordTd.innerHTML = wordWithFurigana;
+                
+                wordTd.onclick = function() {
+                    if (isSelectMode) return;
+                    if (this.classList.contains('hide-text')) {
+                        this.classList.remove('hide-text');
+                    }
+                };
+
+                const meaningTd = document.createElement('td');
+                meaningTd.className = `meaning-cell p-3 align-middle text-gray-700 break-words ${meaningClass}`;
+                meaningTd.textContent = item.meaning;
+                
+                meaningTd.onclick = function() {
+                    if (isSelectMode) return;
+                    if (this.classList.contains('hide-text')) {
+                        this.classList.remove('hide-text');
+                    }
+                };
+
+                const selectTd = document.createElement('td');
+                selectTd.className = 'select-td p-3 align-middle hidden';
+                selectTd.innerHTML = `<input type="checkbox" name="word-select" value="${index}" class="h-4 w-4 text-indigo-600 border-gray-300 rounded focus:ring-indigo-500">`;
+
+                tr.appendChild(selectTd);
+                tr.appendChild(wordTd);
+                tr.appendChild(dictTd);
+                tr.appendChild(meaningTd);
+                
+                wordListBody.appendChild(tr);
+            });
+            
+            updateSelectModeUI();
+
+            const savedScrollY = sessionStorage.getItem('voca_scroll_y');
+            if (savedScrollY) {
+                window.scrollTo(0, parseInt(savedScrollY));
+                sessionStorage.removeItem('voca_scroll_y');
+            }
+        }
+
+        function openNaverDictionary(word) {
+            let searchTerm = word;
+            const furiganaMatch = word.match(/([^\[]*)\[([^\]]+)\]([^\[]*)/);
+            if (furiganaMatch) {
+                const before = furiganaMatch[1];
+                const inside = furiganaMatch[2];
+                const after = furiganaMatch[3];
+                const hasKanjiInside = /[\u4E00-\u9FAF]/.test(inside);
+                if (hasKanjiInside) {
+                    searchTerm = before + inside + after;
+                } else {
+                    searchTerm = before + after;
+                }
+            }
+            searchTerm = searchTerm.replace(/\[[^\]]+\]/g, '').trim();
+            
+            if (searchTerm) {
+                const url = `https://ja.dict.naver.com/#/search?query=${encodeURIComponent(searchTerm)}`;
+                if (window.parent && typeof window.parent.openApp === 'function') {
+                    window.parent.openApp(url);
+                } else {
+                    window.location.href = url;
+                }
+            }
+        }
+        
+        // [수정됨] 마침표(。) 추가하여 급한 마무리 방지
+        function speakText(text) {
+            let cleanText = text.replace(/\[[^\]]+\]/g, '').trim();
+            
+            // [패치] 끝에 마침표가 없으면 강제로 추가 (어조 자연스럽게)
+            if (!cleanText.endsWith('。') && !cleanText.endsWith('!') && !cleanText.endsWith('?')) {
+                cleanText += '。';
+            }
+
+            if ('speechSynthesis' in window) {
+                window.speechSynthesis.cancel(); 
+
+                const utterance = new SpeechSynthesisUtterance(cleanText);
+                utterance.lang = 'ja-JP'; 
+                utterance.rate = 0.8; 
+                utterance.pitch = 1;
+                
+                if (!preferredVoice) {
+                    loadPreferredVoice();
+                }
+
+                if (preferredVoice) {
+                    utterance.voice = preferredVoice;
+                }
+
+                window.speechSynthesis.speak(utterance);
+            } else {
+                alert('이 브라우저는 음성 재생을 지원하지 않습니다.');
+            }
+        }
+
+        // --- 기타 토글 및 기능 함수 ---
+
+        function toggleWordVisibility() {
+            isWordHidden = !isWordHidden;
+            toggleWordBtn.textContent = isWordHidden ? '단어 보이기' : '단어 가리기';
+            const cells = document.querySelectorAll('.word-cell');
+            cells.forEach(cell => {
+                if (isWordHidden) cell.classList.add('hide-text');
+                else cell.classList.remove('hide-text');
+            });
+        }
+
+        function toggleMeaningVisibility() {
+            isMeaningHidden = !isMeaningHidden;
+            toggleMeaningBtn.textContent = isMeaningHidden ? '뜻 보이기' : '뜻 가리기';
+            const cells = document.querySelectorAll('.meaning-cell');
+            cells.forEach(cell => {
+                if (isMeaningHidden) cell.classList.add('hide-text');
+                else cell.classList.remove('hide-text');
+            });
+        }
+        
+        function toggleSelectMode() {
+            isSelectMode = !isSelectMode;
+            updateSelectModeUI();
+        }
+
+        function updateSelectModeUI() {
+            const selectTds = document.querySelectorAll('.select-td');
+            
+            if (isSelectMode) {
+                toggleSelectBtn.textContent = '선택 취소';
+                toggleSelectBtn.className = "flex-1 bg-red-500 hover:bg-red-600 text-white text-sm sm:text-base font-semibold py-3 px-0 rounded-lg transition-colors duration-200 whitespace-nowrap"; 
+                
+                selectTh.classList.remove('hidden');
+                selectTds.forEach(td => td.classList.remove('hidden'));
+                shareSelectedBtn.classList.remove('hidden');
+                
+                isWordHidden = false;
+                isMeaningHidden = false;
+                toggleWordBtn.textContent = '단어 가리기';
+                toggleMeaningBtn.textContent = '뜻 가리기';
+
+                document.querySelectorAll('.hide-text').forEach(el => el.classList.remove('hide-text'));
+
+                toggleWordBtn.disabled = true;
+                toggleMeaningBtn.disabled = true;
+                randomBtn.disabled = true;
+                backToSetupBtn.disabled = true;
+                toggleWordBtn.classList.add('opacity-50', 'cursor-not-allowed');
+                toggleMeaningBtn.classList.add('opacity-50', 'cursor-not-allowed');
+                randomBtn.classList.add('opacity-50', 'cursor-not-allowed');
+                backToSetupBtn.classList.add('opacity-50', 'cursor-not-allowed');
+
+            } else {
+                toggleSelectBtn.textContent = '단어 선택';
+                toggleSelectBtn.className = "flex-1 bg-gray-500 hover:bg-gray-600 text-white text-sm sm:text-base font-semibold py-3 px-0 rounded-lg transition-colors duration-200 whitespace-nowrap"; 
+                
+                selectTh.classList.add('hidden');
+                selectTds.forEach(td => td.classList.add('hidden'));
+                shareSelectedBtn.classList.add('hidden');
+                selectAllWords.checked = false; 
+                
+                toggleWordBtn.disabled = false;
+                toggleMeaningBtn.disabled = false;
+                randomBtn.disabled = false;
+                backToSetupBtn.disabled = false;
+                toggleWordBtn.classList.remove('opacity-50', 'cursor-not-allowed');
+                toggleMeaningBtn.classList.remove('opacity-50', 'cursor-not-allowed');
+                randomBtn.classList.remove('opacity-50', 'cursor-not-allowed');
+                backToSetupBtn.classList.remove('opacity-50', 'cursor-not-allowed');
+            }
+        }
+        
+        async function shareSelectedWords() {
+            const selectedCheckboxes = document.querySelectorAll('input[name="word-select"]:checked');
+            if (selectedCheckboxes.length === 0) {
+                alert('공유할 단어를 1개 이상 선택하세요.');
+                return;
+            }
+            
+            const scope = selectedScopeText.textContent;
+            let shareText = `[일본어 단어장 공유]\n범위: ${scope}\n\n`;
+            
+            selectedCheckboxes.forEach(cb => {
+                const index = parseInt(cb.value, 10);
+                const item = activeWordList[index];
+                shareText += `${item.word} - ${item.meaning}\n`;
+            });
+            
+            try {
+                if (navigator.share) {
+                    await navigator.share({ title: '일본어 단어장 공유', text: shareText });
+                } else {
+                    throw new Error('Web Share API not supported.');
+                }
+            } catch (err) {
+                try {
+                    await navigator.clipboard.writeText(shareText);
+                    shareSelectedBtn.textContent = '✅ 클립보드에 복사됨!';
+                } catch (copyErr) {
+                    shareSelectedBtn.textContent = '공유/복사 실패';
+                }
+                setTimeout(() => {
+                    shareSelectedBtn.textContent = '선택한 단어 공유하기';
+                }, 2000);
+            }
+        }
+        
+        function updateFontSize() {
+            document.documentElement.style.setProperty('--word-font-size', `${currentWordFontSize}px`);
+        }
+
+        // --- 이벤트 리스너 ---
+
+        selectAllGroups.addEventListener('change', (e) => {
+            document.querySelectorAll('input[name="group-select"]')
+                    .forEach(cb => cb.checked = e.target.checked);
+        });
+
+        startBtn.addEventListener('click', () => showWordList(true));
+
+        backToSetupBtn.addEventListener('click', () => {
+            sessionStorage.removeItem('voca_selected_groups');
+            sessionStorage.removeItem('voca_scroll_y');
+            wordlistContainer.classList.add('hidden');
+            setupContainer.classList.remove('hidden');
+        });
+        
+        randomBtn.addEventListener('click', () => {
+            activeWordList.sort(() => Math.random() - 0.5);
+            displayWordList();
+        });
+        
+        toggleWordBtn.addEventListener('click', toggleWordVisibility);
+        toggleMeaningBtn.addEventListener('click', toggleMeaningVisibility);
+        toggleSelectBtn.addEventListener('click', toggleSelectMode);
+        
+        selectAllWords.addEventListener('change', (e) => {
+            document.querySelectorAll('input[name="word-select"]')
+                    .forEach(cb => cb.checked = e.target.checked);
+        });
+        
+        shareSelectedBtn.addEventListener('click', shareSelectedWords);
+        
+        fontIncreaseBtn.addEventListener('click', () => {
+            if (currentWordFontSize < 60) { 
+                currentWordFontSize += 2;
+                updateFontSize();
+            }
+        });
+
+        fontDecreaseBtn.addEventListener('click', () => {
+            if (currentWordFontSize > 12) { 
+                currentWordFontSize -= 2;
+                updateFontSize();
+            }
+        });
+
+        furiganaToggle.addEventListener('change', (e) => {
+            if (e.target.checked) {
+                wordListBody.classList.remove('hide-furigana');
+            } else {
+                wordListBody.classList.add('hide-furigana');
+            }
+        });
+
+        document.addEventListener('DOMContentLoaded', loadVocabulary);
+    </script>
+</body>
+</html>
