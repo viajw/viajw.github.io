@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>일본어 단어장 (Spacing Adjusted)</title>
+    <title>일본어 단어장 (Voice Select Ver.)</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/static/pretendard.min.css" />
     <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+JP:wght@400;500;700;900&display=swap" rel="stylesheet">
@@ -30,53 +30,19 @@
         ruby rt { font-size: 0.55em; user-select: none; color: #6b7280; font-weight: normal; }
         .hide-furigana ruby rt { display: none; }
         
-        .reveal-container {
-            position: relative;
-            display: block;
-            width: 100%; 
-        }
-
-        .reveal-content {
-            transition: opacity 0.5s ease; 
-            opacity: 1;
-        }
-
+        .reveal-container { position: relative; display: block; width: 100%; }
+        .reveal-content { transition: opacity 0.5s ease; opacity: 1; }
         .reveal-cover {
-            position: absolute;
-            inset: 0; 
-            background-color: #f3f4f6; 
-            border-radius: 6px;
-            cursor: pointer;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            opacity: 0;
-            pointer-events: none; 
-            transition: opacity 0.5s ease;
-            z-index: 10;
+            position: absolute; inset: 0; background-color: #f3f4f6; border-radius: 6px;
+            cursor: pointer; display: flex; align-items: center; justify-content: center;
+            opacity: 0; pointer-events: none; transition: opacity 0.5s ease; z-index: 10;
         }
-        
-        .reveal-cover::after {
-            content: "?";
-            color: #9ca3af;
-            font-weight: bold;
-            font-size: 18px;
-        }
-
+        .reveal-cover::after { content: "?"; color: #9ca3af; font-weight: bold; font-size: 18px; }
         .reveal-container.is-hidden .reveal-content { opacity: 0; }
         .reveal-container.is-hidden .reveal-cover { opacity: 1; pointer-events: auto; }
 
-        .word-text { 
-            font-size: var(--word-font-size) !important; 
-            font-weight: 800; 
-            color: #111827;
-            line-height: 1.2;
-        }
-        .meaning-text {
-            color: #6b7280;
-            line-height: 1.4;
-            font-size: 0.95rem; 
-        }
+        .word-text { font-size: var(--word-font-size) !important; font-weight: 800; color: #111827; line-height: 1.2; }
+        .meaning-text { color: #6b7280; line-height: 1.4; font-size: 0.95rem; }
     </style>
 </head>
 <body class="bg-gray-100 flex items-center justify-center min-h-screen font-sans">
@@ -99,19 +65,27 @@
                 </div>
             </div>
 
-            <div class="mb-8 flex items-center justify-between p-3 bg-gray-50 rounded-lg border border-gray-200">
-                <div class="flex flex-col">
-                    <span class="text-base font-bold text-gray-700">음성 속도</span>
-                    <span class="text-xs text-gray-400">TTS Speed</span>
-                </div>
+            <div class="mb-8 flex flex-col gap-3 p-4 bg-gray-50 rounded-lg border border-gray-200">
                 
-                <div class="flex items-center bg-white rounded-full border border-gray-300 px-1 py-1 shadow-sm">
-                    <button id="speed-decrease" class="w-8 h-8 flex items-center justify-center rounded-full text-gray-500 hover:bg-gray-100 hover:text-indigo-600 transition-colors font-bold text-lg pb-1">−</button>
-                    
-                    <span id="speed-display" class="w-10 text-center font-bold text-indigo-600 text-lg">0.7</span>
-                    
-                    <button id="speed-increase" class="w-8 h-8 flex items-center justify-center rounded-full text-gray-500 hover:bg-gray-100 hover:text-indigo-600 transition-colors font-bold text-lg pb-1">+</button>
+                <div class="flex items-center justify-between border-b border-gray-200 pb-3 mb-1">
+                    <div class="flex flex-col">
+                        <span class="text-base font-bold text-gray-700">음성 속도</span>
+                        <span class="text-xs text-gray-400">TTS Speed</span>
+                    </div>
+                    <div class="flex items-center bg-white rounded-full border border-gray-300 px-1 py-1 shadow-sm">
+                        <button id="speed-decrease" class="w-8 h-8 flex items-center justify-center rounded-full text-gray-500 hover:bg-gray-100 hover:text-indigo-600 transition-colors font-bold text-lg pb-1">−</button>
+                        <span id="speed-display" class="w-10 text-center font-bold text-indigo-600 text-lg">0.7</span>
+                        <button id="speed-increase" class="w-8 h-8 flex items-center justify-center rounded-full text-gray-500 hover:bg-gray-100 hover:text-indigo-600 transition-colors font-bold text-lg pb-1">+</button>
+                    </div>
                 </div>
+
+                <div class="flex flex-col">
+                    <label for="voice-select" class="text-base font-bold text-gray-700 mb-2">목소리 선택</label>
+                    <select id="voice-select" class="w-full bg-white border border-gray-300 text-gray-700 py-2 px-3 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 text-sm">
+                        <option value="auto">자동 선택 (추천)</option>
+                        </select>
+                </div>
+
             </div>
 
             <button id="start-btn" class="w-full bg-indigo-600 hover:bg-indigo-700 text-white font-bold py-3 px-4 rounded-lg transition-all duration-200 shadow-md">단어장 보기</button>
@@ -160,14 +134,14 @@
         let isWordHidden = false;
         let isMeaningHidden = false;
         let currentWordFontSize = 26; 
-        let preferredVoice = null;
         let ttsRate = 0.7; 
+        // [추가됨] 선택된 목소리 저장 변수 (기본값 auto)
+        let selectedVoiceName = 'auto'; 
 
         const setupContainer = document.getElementById('setup-container');
         const wordlistContainer = document.getElementById('wordlist-container');
         const wordListBody = document.getElementById('word-list-body');
         const listContainer = document.getElementById('list-container');
-        
         const groupCheckboxContainer = document.getElementById('group-checkbox-container');
         const selectAllGroups = document.getElementById('select-all-groups');
         const startBtn = document.getElementById('start-btn');
@@ -185,20 +159,47 @@
         const speedDecreaseBtn = document.getElementById('speed-decrease');
         const speedIncreaseBtn = document.getElementById('speed-increase');
         const speedDisplay = document.getElementById('speed-display');
+        const voiceSelect = document.getElementById('voice-select'); // 목소리 선택 드롭다운
 
-        function loadPreferredVoice() {
+        // --- [핵심] 목소리 목록 로드 및 드롭다운 구성 ---
+        function populateVoiceList() {
+            if (typeof speechSynthesis === 'undefined') return;
+
             const voices = window.speechSynthesis.getVoices();
-            if (voices.length === 0) return; 
-            let target = voices.find(v => v.lang === 'ja-JP' && (v.name.includes('Natural') || v.name.includes('Online')));
-            if (!target) target = voices.find(v => v.lang === 'ja-JP' && v.name.includes('Google'));
-            if (!target) target = voices.find(v => v.lang === 'ja-JP' && v.name.includes('Siri'));
-            if (!target) target = voices.find(v => v.lang === 'ja-JP');
-            if (target) preferredVoice = target;
+            // 일본어(ja)가 포함된 목소리만 필터링
+            const jpVoices = voices.filter(v => v.lang.includes('ja') || v.lang.includes('JP'));
+
+            // 기존 옵션 초기화 (첫번째 '자동' 빼고 다 지움)
+            while (voiceSelect.options.length > 1) {
+                voiceSelect.remove(1);
+            }
+
+            jpVoices.forEach((voice) => {
+                const option = document.createElement('option');
+                option.textContent = `${voice.name} (${voice.lang})`;
+                option.value = voice.name;
+                voiceSelect.appendChild(option);
+            });
+
+            // 저장된 설정이 있으면 복구
+            const savedVoice = sessionStorage.getItem('voca_selected_voice');
+            if (savedVoice) {
+                selectedVoiceName = savedVoice;
+                voiceSelect.value = savedVoice;
+            }
         }
+
         if ('speechSynthesis' in window) {
-            window.speechSynthesis.onvoiceschanged = loadPreferredVoice;
-            loadPreferredVoice();
+            window.speechSynthesis.onvoiceschanged = populateVoiceList;
+            // 로드 시점 차이로 인해 한번 더 실행
+            setTimeout(populateVoiceList, 100);
         }
+
+        // --- 이벤트: 목소리 변경 시 저장 ---
+        voiceSelect.addEventListener('change', (e) => {
+            selectedVoiceName = e.target.value;
+            sessionStorage.setItem('voca_selected_voice', selectedVoiceName);
+        });
 
         async function loadVocabulary() {
             try {
@@ -225,6 +226,7 @@
                 });
                 displayGroupCheckboxes();
                 restoreState();
+                populateVoiceList(); // 단어 로드 시점에도 목소리 목록 확인
             } catch (error) {
                 console.error(error);
                 groupCheckboxContainer.innerHTML = `<p class="text-red-500">${error.message}</p>`;
@@ -263,20 +265,14 @@
             const selectedGroups = Array.from(document.querySelectorAll('input[name="group-select"]:checked')).map(cb => cb.value);
             if (selectedGroups.length === 0) { setupError.textContent = '표시할 그룹을 1개 이상 선택하세요.'; return; }
             if (shouldSaveState) sessionStorage.setItem('voca_selected_groups', JSON.stringify(selectedGroups));
-            
             activeWordList = [];
-            selectedGroups.forEach(groupName => {
-                activeWordList.push(...allVocabGroups[groupName]);
-            });
-            
+            selectedGroups.forEach(groupName => { activeWordList.push(...allVocabGroups[groupName]); });
             if (activeWordList.length === 0) { setupError.textContent = '선택한 그룹에 단어가 없습니다.'; return; }
-            
             selectedScopeText.textContent = (selectedGroups.length === Object.keys(allVocabGroups).length) ? '단어장 전체' : selectedGroups.join(', ');
             displayWordList();
             setupContainer.classList.add('hidden');
             wordlistContainer.classList.remove('hidden');
             setupError.textContent = '';
-            
             if (furiganaToggle.checked) wordListBody.classList.remove('hide-furigana');
             else wordListBody.classList.add('hide-furigana');
         }
@@ -294,91 +290,49 @@
             activeWordList.forEach((item, index) => {
                 const li = document.createElement('li');
                 li.className = `p-4 border-b border-gray-100 last:border-0 ${item.isBookmarked ? 'bg-yellow-50' : 'bg-white'}`;
-                
                 const topRow = document.createElement('div');
-                // [수정] mb-0 -> mb-1로 약간의 간격 추가
                 topRow.className = "flex justify-between items-start mb-1"; 
-
                 const leftGroup = document.createElement('div');
                 leftGroup.className = "flex items-center gap-3 flex-1 min-w-0";
-                
                 const wordWrapper = document.createElement('div');
                 wordWrapper.className = `reveal-container ${isWordHidden ? 'is-hidden' : ''}`;
-                
                 const wordContent = document.createElement('span');
                 wordContent.className = "reveal-content word-text break-words";
                 wordContent.innerHTML = formatFurigana(item.word);
-                
                 const wordCover = document.createElement('div');
                 wordCover.className = "reveal-cover";
-                wordCover.onclick = function(e) {
-                    e.stopPropagation(); 
-                    wordWrapper.classList.remove('is-hidden'); 
-                };
-
-                wordWrapper.appendChild(wordContent);
-                wordWrapper.appendChild(wordCover);
-                leftGroup.appendChild(wordWrapper);
-
+                wordCover.onclick = function(e) { e.stopPropagation(); wordWrapper.classList.remove('is-hidden'); };
+                wordWrapper.appendChild(wordContent); wordWrapper.appendChild(wordCover); leftGroup.appendChild(wordWrapper);
+                
                 const iconGroup = document.createElement('div');
                 iconGroup.className = "flex gap-1 shrink-0 ml-2";
-
                 const dictBtn = document.createElement('button');
                 dictBtn.className = "text-gray-400 hover:text-green-600 p-1";
                 dictBtn.innerHTML = `<svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" class="w-5 h-5"><path stroke-linecap="round" stroke-linejoin="round" d="m21 21-5.197-5.197m0 0A7.5 7.5 0 1 0 5.196 5.196a7.5 7.5 0 0 0 10.607 10.607Z" /></svg>`;
                 dictBtn.onclick = (e) => { e.stopPropagation(); sessionStorage.setItem('voca_scroll_y', listContainer.scrollTop); openNaverDictionary(item.word); };
-
                 const speakBtn = document.createElement('button');
                 speakBtn.className = "text-gray-400 hover:text-indigo-600 p-1";
                 speakBtn.innerHTML = `<svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" class="w-5 h-5"><path stroke-linecap="round" stroke-linejoin="round" d="M19.114 5.636a9 9 0 0 1 0 12.728M16.463 8.288a5.25 5.25 0 0 1 0 7.424M6.75 8.25l4.72-4.72a.75.75 0 0 1 1.28.53v15.88a.75.75 0 0 1-1.28.53l-4.72-4.72H4.51c-.88 0-1.704-.507-1.938-1.354A9.009 9.009 0 0 1 2.25 12c0-.83.112-1.633.322-2.396C2.806 8.756 3.63 8.25 4.51 8.25H6.75Z" /></svg>`;
                 speakBtn.onclick = (e) => { e.stopPropagation(); speakText(item.word); };
-
                 const bookmarkBtn = document.createElement('button');
                 bookmarkBtn.className = `p-1 transition-colors duration-150 ${item.isBookmarked ? 'text-yellow-500' : 'text-gray-400 hover:text-yellow-400'}`;
-                
-                if (item.isBookmarked) {
-                    bookmarkBtn.innerHTML = `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" class="w-5 h-5"><path fill-rule="evenodd" d="M5 4a2 2 0 0 1 2-2h10a2 2 0 0 1 2 2v16l-7-3.5L5 20V4z" /></svg>`;
-                } else {
-                    bookmarkBtn.innerHTML = `<svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" class="w-5 h-5"><path stroke-linecap="round" stroke-linejoin="round" d="M5 5a2 2 0 0 1 2-2h10a2 2 0 0 1 2 2v16l-7-3.5L5 21V5z" /></svg>`;
-                }
-                
-                bookmarkBtn.onclick = (e) => {
-                    e.stopPropagation();
-                    toggleBookmark(index); 
-                };
-
-                iconGroup.appendChild(dictBtn);
-                iconGroup.appendChild(speakBtn);
-                iconGroup.appendChild(bookmarkBtn); 
-
-                topRow.appendChild(leftGroup);
-                topRow.appendChild(iconGroup);
-
+                if (item.isBookmarked) { bookmarkBtn.innerHTML = `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" class="w-5 h-5"><path fill-rule="evenodd" d="M5 4a2 2 0 0 1 2-2h10a2 2 0 0 1 2 2v16l-7-3.5L5 20V4z" /></svg>`; } 
+                else { bookmarkBtn.innerHTML = `<svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" class="w-5 h-5"><path stroke-linecap="round" stroke-linejoin="round" d="M5 5a2 2 0 0 1 2-2h10a2 2 0 0 1 2 2v16l-7-3.5L5 21V5z" /></svg>`; }
+                bookmarkBtn.onclick = (e) => { e.stopPropagation(); toggleBookmark(index); };
+                iconGroup.appendChild(dictBtn); iconGroup.appendChild(speakBtn); iconGroup.appendChild(bookmarkBtn); 
+                topRow.appendChild(leftGroup); topRow.appendChild(iconGroup);
                 const bottomRow = document.createElement('div');
-                
                 const meaningWrapper = document.createElement('div');
                 meaningWrapper.className = `reveal-container ${isMeaningHidden ? 'is-hidden' : ''}`;
-                
                 const meaningContent = document.createElement('div');
                 meaningContent.className = "reveal-content meaning-text break-words";
                 meaningContent.textContent = item.meaning;
-
                 const meaningCover = document.createElement('div');
                 meaningCover.className = "reveal-cover";
-                meaningCover.onclick = function(e) {
-                    e.stopPropagation();
-                    meaningWrapper.classList.remove('is-hidden'); 
-                };
-
-                meaningWrapper.appendChild(meaningContent);
-                meaningWrapper.appendChild(meaningCover);
-                bottomRow.appendChild(meaningWrapper);
-
-                li.appendChild(topRow);
-                li.appendChild(bottomRow);
-                wordListBody.appendChild(li);
+                meaningCover.onclick = function(e) { e.stopPropagation(); meaningWrapper.classList.remove('is-hidden'); };
+                meaningWrapper.appendChild(meaningContent); meaningWrapper.appendChild(meaningCover); bottomRow.appendChild(meaningWrapper);
+                li.appendChild(topRow); li.appendChild(bottomRow); wordListBody.appendChild(li);
             });
-
             const savedScrollY = sessionStorage.getItem('voca_scroll_y');
             if (savedScrollY) { listContainer.scrollTop = parseInt(savedScrollY); sessionStorage.removeItem('voca_scroll_y'); }
         }
@@ -408,19 +362,40 @@
             }
         }
         
+        // [수정됨] 목소리 선택 반영한 speakText
         function speakText(text) {
             let cleanText = text.replace(/\[[^\]]+\]/g, '').trim();
             if (!cleanText.endsWith('。') && !cleanText.endsWith('!') && !cleanText.endsWith('?')) { cleanText += '。'; }
+            
             if ('speechSynthesis' in window) {
                 window.speechSynthesis.cancel(); 
                 const utterance = new SpeechSynthesisUtterance(cleanText);
                 utterance.lang = 'ja-JP'; 
                 utterance.rate = ttsRate; 
                 utterance.pitch = 1;
-                if (!preferredVoice) loadPreferredVoice();
-                if (preferredVoice) utterance.voice = preferredVoice;
+                
+                const voices = window.speechSynthesis.getVoices();
+                
+                // 1. 사용자가 직접 선택한 목소리가 'auto'가 아니고 실제로 존재하면 그걸 씀
+                if (selectedVoiceName !== 'auto') {
+                    const selected = voices.find(v => v.name === selectedVoiceName);
+                    if (selected) {
+                        utterance.voice = selected;
+                    }
+                } 
+                // 2. 'auto'라면 기존의 똑똑한 로직 수행
+                else {
+                    let target = voices.find(v => v.lang === 'ja-JP' && (v.name.includes('Natural') || v.name.includes('Online')));
+                    if (!target) target = voices.find(v => v.lang === 'ja-JP' && v.name.includes('Google'));
+                    if (!target) target = voices.find(v => v.lang === 'ja-JP' && v.name.includes('Siri'));
+                    if (!target) target = voices.find(v => v.lang === 'ja-JP');
+                    if (target) utterance.voice = target;
+                }
+
                 window.speechSynthesis.speak(utterance);
-            } else { alert('이 브라우저는 음성 재생을 지원하지 않습니다.'); }
+            } else { 
+                alert('이 브라우저는 음성 재생을 지원하지 않습니다.'); 
+            }
         }
 
         function toggleWordVisibility() {
@@ -448,30 +423,16 @@
         
         async function shareBookmarkedWords() {
             const bookmarkedItems = activeWordList.filter(item => item.isBookmarked);
-            
-            if (bookmarkedItems.length === 0) { 
-                alert('북마크한 단어가 없습니다. 단어 오른쪽의 북마크 아이콘을 눌러보세요.'); 
-                return; 
-            }
-            
+            if (bookmarkedItems.length === 0) { alert('북마크한 단어가 없습니다. 단어 오른쪽의 북마크 아이콘을 눌러보세요.'); return; }
             const scope = selectedScopeText.textContent;
             let shareText = `[일본어 단어장 - 중요 단어]\n범위: ${scope}\n\n`;
-            bookmarkedItems.forEach(item => {
-                shareText += `${item.word} - ${item.meaning}\n`;
-            });
-            
+            bookmarkedItems.forEach(item => { shareText += `${item.word} - ${item.meaning}\n`; });
             try {
                 if (navigator.share) await navigator.share({ title: '일본어 단어장 중요 단어', text: shareText });
                 else throw new Error('Web Share API not supported.');
             } catch (err) {
-                try { 
-                    await navigator.clipboard.writeText(shareText); 
-                    shareBookmarkBtn.textContent = '✅ 복사됨!'; 
-                    setTimeout(() => shareBookmarkBtn.textContent = '북마크 공유', 2000);
-                } 
-                catch (copyErr) { 
-                    alert('공유/복사에 실패했습니다.'); 
-                }
+                try { await navigator.clipboard.writeText(shareText); shareBookmarkBtn.textContent = '✅ 복사됨!'; setTimeout(() => shareBookmarkBtn.textContent = '북마크 공유', 2000); } 
+                catch (copyErr) { alert('공유/복사에 실패했습니다.'); }
             }
         }
         
@@ -483,17 +444,10 @@
         }
 
         speedDecreaseBtn.addEventListener('click', () => {
-            if (ttsRate > 0.2) {
-                ttsRate = parseFloat((ttsRate - 0.1).toFixed(1)); 
-                updateSpeedDisplay();
-            }
+            if (ttsRate > 0.2) { ttsRate = parseFloat((ttsRate - 0.1).toFixed(1)); updateSpeedDisplay(); }
         });
-
         speedIncreaseBtn.addEventListener('click', () => {
-            if (ttsRate < 2.0) {
-                ttsRate = parseFloat((ttsRate + 0.1).toFixed(1));
-                updateSpeedDisplay();
-            }
+            if (ttsRate < 2.0) { ttsRate = parseFloat((ttsRate + 0.1).toFixed(1)); updateSpeedDisplay(); }
         });
 
         selectAllGroups.addEventListener('change', (e) => document.querySelectorAll('input[name="group-select"]').forEach(cb => cb.checked = e.target.checked));
@@ -508,7 +462,6 @@
         toggleWordBtn.addEventListener('click', toggleWordVisibility);
         toggleMeaningBtn.addEventListener('click', toggleMeaningVisibility);
         shareBookmarkBtn.addEventListener('click', shareBookmarkedWords);
-        
         fontIncreaseBtn.addEventListener('click', () => { if (currentWordFontSize < 60) { currentWordFontSize += 2; updateFontSize(); } });
         fontDecreaseBtn.addEventListener('click', () => { if (currentWordFontSize > 12) { currentWordFontSize -= 2; updateFontSize(); } });
         furiganaToggle.addEventListener('change', (e) => e.target.checked ? wordListBody.classList.remove('hide-furigana') : wordListBody.classList.add('hide-furigana'));
